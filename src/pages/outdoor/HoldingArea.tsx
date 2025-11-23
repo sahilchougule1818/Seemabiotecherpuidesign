@@ -234,7 +234,7 @@ export function HoldingArea() {
                 ))}
               </SelectContent>
             </Select>
-            <Button onClick={handleBatchFilter} className="gap-2">
+            <Button onClick={handleBatchFilter} className="gap-2 bg-[#2196F3] hover:bg-[#1976D2] text-white">
               <Search className="w-4 h-4" />
               Search
             </Button>

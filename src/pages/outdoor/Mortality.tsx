@@ -26,6 +26,8 @@ export function Mortality() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [batchFilter, setBatchFilter] = useState("");
   const [showFiltered, setShowFiltered] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterValue, setFilterValue] = useState("all");
 
   const [form, setForm] = useState({
     id: "",
@@ -228,7 +230,7 @@ export function Mortality() {
                 ))}
               </SelectContent>
             </Select>
-            <Button onClick={handleBatchFilter} className="gap-2">
+            <Button onClick={handleBatchFilter} className="gap-2 bg-[#2196F3] hover:bg-[#1976D2] text-white">
               <Search className="w-4 h-4" />
               Search
             </Button>
