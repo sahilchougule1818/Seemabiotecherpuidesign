@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { loadFromLocalStorage } from "../utils/loadFromLocalStorage";
+import { STORAGE_KEYS } from "../constants/storageKeys";
 
 export type StatusType = "pending" | "active" | "completed" | "contaminated";
 
@@ -75,7 +76,7 @@ const defaultRecords: IncubationRecord[] = [
   ];
 
 const initialState: IncubationState = {
-  records: loadFromLocalStorage<IncubationRecord[]>('incubation_records', defaultRecords),
+  records: loadFromLocalStorage<IncubationRecord[]>(STORAGE_KEYS.INCUBATION_RECORDS, defaultRecords),
   searchTerm: "",
   filterStatus: "all",
   editingId: null,

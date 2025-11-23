@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { loadFromLocalStorage } from "../utils/loadFromLocalStorage";
+import { STORAGE_KEYS } from "../constants/storageKeys";
 
 export type StatusType = "pending" | "active" | "completed" | "contaminated";
 
@@ -90,7 +91,7 @@ const defaultRecords: SecondaryHardeningRecord[] = [
   ];
 
 const initialState: SecondaryHardeningState = {
-  records: loadFromLocalStorage<SecondaryHardeningRecord[]>('secondaryHardening_records', defaultRecords),
+  records: loadFromLocalStorage<SecondaryHardeningRecord[]>(STORAGE_KEYS.SECONDARY_HARDENING_RECORDS, defaultRecords),
   searchTerm: "",
   filterStatus: "all",
   editingId: null,

@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { loadFromLocalStorage } from "../utils/loadFromLocalStorage";
+import { STORAGE_KEYS } from "../constants/storageKeys";
 
 export type StatusType = "pending" | "active" | "completed" | "contaminated";
 
@@ -90,7 +91,7 @@ const defaultRecords: OutdoorSamplingRecord[] = [
   ];
 
 const initialState: OutdoorSamplingState = {
-  records: loadFromLocalStorage<OutdoorSamplingRecord[]>('outdoorSampling_records', defaultRecords),
+  records: loadFromLocalStorage<OutdoorSamplingRecord[]>(STORAGE_KEYS.OUTDOOR_SAMPLING_RECORDS, defaultRecords),
   searchTerm: "",
   filterStatus: "all",
   editingId: null,
