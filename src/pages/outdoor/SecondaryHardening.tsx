@@ -69,18 +69,18 @@ export function SecondaryHardening() {
 
   const handleAdd = useCallback(() => {
     const newRecord: SecondaryHardeningRecord = {
-      id: formRefs.id.current?.value || `SH-2024-${records.length + 1}`,
-      date: formRefs.date.current?.value || "",
+      id: formRefs.id.current?.value || `SH-2024-${String(records.length + 1).padStart(3, '0')}`,
+      date: formRefs.date.current?.value || new Date().toISOString().split('T')[0],
       batchName: formRefs.batchName.current?.value || "",
-      crop: formData.crop || "",
-      tunnel: formData.tunnel || "",
-      bed: formData.bed || "",
-      row: formRefs.row.current?.value || "",
-      cavity: formRefs.cavity.current?.value || "",
-      plants: parseInt(formRefs.plants.current?.value || "0"),
-      workers: parseInt(formRefs.workers.current?.value || "0"),
-      waitingPeriod: formRefs.waitingPeriod.current?.value || "",
-      survivability: formRefs.survivability.current?.value || "",
+      crop: formData.crop || "Banana",
+      tunnel: formData.tunnel || "Tunnel 1",
+      bed: formData.bed || "Bed 1",
+      row: formRefs.row.current?.value || "1",
+      cavity: formRefs.cavity.current?.value || "50",
+      plants: parseInt(formRefs.plants.current?.value || "0") || 0,
+      workers: parseInt(formRefs.workers.current?.value || "0") || 0,
+      waitingPeriod: formRefs.waitingPeriod.current?.value || "7 days",
+      survivability: formRefs.survivability.current?.value || "95%",
       status: (formData.status || "pending") as StatusType,
     };
 
@@ -94,7 +94,7 @@ export function SecondaryHardening() {
 
     setIsAddModalOpen(false);
     Object.values(formRefs).forEach((ref) => {
-      if (ref.current) ref.current.value = "";
+      if (ref.current && 'value' in ref.current) ref.current.value = "";
     });
     setFormData({ crop: "", tunnel: "", bed: "", status: "" });
   }, [dispatch, editingId, editingRecord, records.length, formData]);

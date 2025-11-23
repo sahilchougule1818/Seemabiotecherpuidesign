@@ -66,15 +66,15 @@ export function HoldingArea() {
 
   const handleAdd = useCallback(() => {
     const newRecord: HoldingAreaRecord = {
-      id: formRefs.id.current?.value || `HA-2024-${records.length + 1}`,
-      date: formRefs.date.current?.value || "",
+      id: formRefs.id.current?.value || `HA-2024-${String(records.length + 1).padStart(3, '0')}`,
+      date: formRefs.date.current?.value || new Date().toISOString().split('T')[0],
       batchID: formRefs.batchID.current?.value || "",
-      crop: formData.crop || "",
+      crop: formData.crop || "Banana",
       variety: formRefs.variety.current?.value || "",
-      quantity: parseInt(formRefs.quantity.current?.value || "0"),
-      location: formData.location || "",
+      quantity: parseInt(formRefs.quantity.current?.value || "0") || 0,
+      location: formData.location || "Section A",
       daysinHolding: 0,
-      condition: formData.condition || "",
+      condition: formData.condition || "Good",
       dispatchDate: formRefs.dispatchDate.current?.value || "",
       status: (formData.status || "pending") as StatusType,
     };
@@ -89,7 +89,7 @@ export function HoldingArea() {
 
     setIsAddModalOpen(false);
     Object.values(formRefs).forEach((ref) => {
-      if (ref.current) ref.current.value = "";
+      if (ref.current && 'value' in ref.current) ref.current.value = "";
     });
     setFormData({ crop: "", location: "", condition: "", status: "" });
   }, [dispatch, editingId, editingRecord, records.length, formData]);

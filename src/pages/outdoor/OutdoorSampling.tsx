@@ -72,13 +72,13 @@ export function OutdoorSampling() {
 
   const handleAdd = useCallback(() => {
     const newRecord: OutdoorSamplingRecord = {
-      id: formRefs.id.current?.value || `OS-2024-${records.length + 1}`,
-      date: formRefs.date.current?.value || "",
+      id: formRefs.id.current?.value || `OS-2024-${String(records.length + 1).padStart(3, '0')}`,
+      date: formRefs.date.current?.value || new Date().toISOString().split('T')[0],
       batchID: formRefs.batchID.current?.value || "",
-      stage: formData.stage || "",
-      crop: formData.crop || "",
-      sampleType: formData.sampleType || "",
-      testType: formData.testType || "",
+      stage: formData.stage || "Hardening",
+      crop: formData.crop || "Banana",
+      sampleType: formData.sampleType || "Visual",
+      testType: formData.testType || "Quality Check",
       result: formRefs.result.current?.value || "",
       testedBy: formRefs.testedBy.current?.value || "",
       remarks: formRefs.remarks.current?.value || "",
@@ -97,7 +97,7 @@ export function OutdoorSampling() {
 
     setIsAddModalOpen(false);
     Object.values(formRefs).forEach((ref) => {
-      if (ref.current) ref.current.value = "";
+      if (ref.current && 'value' in ref.current) ref.current.value = "";
     });
     setFormData({ stage: "", crop: "", sampleType: "", testType: "", govVerified: "", status: "" });
   }, [dispatch, editingId, editingRecord, records.length, formData]);

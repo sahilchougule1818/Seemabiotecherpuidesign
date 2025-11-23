@@ -67,16 +67,17 @@ export function Subculturing() {
   }, [records, searchTerm, filterValue]);
 
   const handleAdd = useCallback(() => {
+    const newID = formRefs.id.current?.value || `SC-2024-${String(records.length + 1).padStart(3, '0')}`;
     const newRecord: SubcultureRecord = {
-      id: formRefs.id.current?.value || `SC-2024-${records.length + 1}`,
-      date: formRefs.date.current?.value || "",
+      id: newID,
+      date: formRefs.date.current?.value || new Date().toISOString().split('T')[0],
       sourceID: formRefs.sourceID.current?.value || "",
-      crop: formData.crop || "",
+      crop: formData.crop || "Banana",
       variety: formRefs.variety.current?.value || "",
-      stage: formData.stage || "",
-      explants: parseInt(formRefs.explants.current?.value || "0"),
-      mediaUsed: formData.mediaUsed || "",
-      technician: formRefs.technician.current?.value || "",
+      stage: formData.stage || "Stage 1",
+      explants: parseInt(formRefs.explants.current?.value || "0") || 0,
+      mediaUsed: formData.mediaUsed || "MS Medium",
+      technician: formRefs.technician.current?.value || "Lab Technician",
       status: (formData.status || "pending") as StatusType,
     };
 
@@ -90,7 +91,7 @@ export function Subculturing() {
 
     setIsAddModalOpen(false);
     Object.values(formRefs).forEach((ref) => {
-      if (ref.current) ref.current.value = "";
+      if (ref.current && 'value' in ref.current) ref.current.value = "";
     });
     setFormData({ crop: "", stage: "", mediaUsed: "", status: "" });
   }, [dispatch, editingId, editingRecord, records.length, formData]);
@@ -155,7 +156,7 @@ export function Subculturing() {
             <Download className="w-4 h-4" />
             Export
           </Button>
-          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+          <Dialog open={isAddModalOpen} onOpenChange={(open) => { if (!open) { handleCloseModal(); } else { setIsAddModalOpen(true); } }}>
             <DialogTrigger asChild>
               <Button className="gap-2 bg-[#4CAF50] hover:bg-[#45a049]">
                 <Plus className="w-4 h-4" />

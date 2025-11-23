@@ -64,14 +64,14 @@ export function Incubation() {
 
   const handleAdd = useCallback(() => {
     const newRecord: IncubationRecord = {
-      id: formRefs.id.current?.value || `INC-2024-${records.length + 1}`,
+      id: formRefs.id.current?.value || `INC-2024-${String(records.length + 1).padStart(3, '0')}`,
       batchID: formRefs.batchID.current?.value || "",
-      startDate: formRefs.startDate.current?.value || "",
-      duration: formRefs.duration.current?.value || "",
-      temperature: formRefs.temperature.current?.value || "",
-      light: formRefs.light.current?.value || "",
-      humidity: formRefs.humidity.current?.value || "",
-      chamber: formData.chamber || "",
+      startDate: formRefs.startDate.current?.value || new Date().toISOString().split('T')[0],
+      duration: formRefs.duration.current?.value || "14 days",
+      temperature: formRefs.temperature.current?.value || "25°C",
+      light: formRefs.light.current?.value || "16h light/8h dark",
+      humidity: formRefs.humidity.current?.value || "70%",
+      chamber: formData.chamber || "Chamber 1",
       observations: formRefs.observations.current?.value || "",
       status: (formData.status || "pending") as StatusType,
     };
@@ -86,7 +86,7 @@ export function Incubation() {
 
     setIsAddModalOpen(false);
     Object.values(formRefs).forEach((ref) => {
-      if (ref.current) ref.current.value = "";
+      if (ref.current && 'value' in ref.current) ref.current.value = "";
     });
     setFormData({ chamber: "", status: "" });
   }, [dispatch, editingId, editingRecord, records.length, formData]);
