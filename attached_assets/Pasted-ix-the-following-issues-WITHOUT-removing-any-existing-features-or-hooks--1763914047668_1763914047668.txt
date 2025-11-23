@@ -1,0 +1,69 @@
+ix the following issues WITHOUT removing any existing features or hooks:
+
+-------------------------------------------------------------------------------
+1️⃣ **ADD FUNCTIONALITY NOT WORKING**
+-------------------------------------------------------------------------------
+• The form data is NOT being added to the table after submitting.
+• Fix the add/submit handler so that the entered information is saved correctly.
+• Use the existing structure – don’t rewrite components or folder structure.
+• Make sure the new item appears immediately in the UI state after submit.
+
+-------------------------------------------------------------------------------
+2️⃣ **MULTI-SELECT DROPDOWN BACKGROUND FIX**
+-------------------------------------------------------------------------------
+• The multi-select dropdown has a transparent background.
+• Remove transparency and apply a proper white background (#fff).
+• Ensure text is visible.
+• Make hover and selected states clearly visible.
+
+-------------------------------------------------------------------------------
+3️⃣ **KEEP ALL EXISTING HOOKS – BUT ADD THE TWO REMAINING**
+-------------------------------------------------------------------------------
+The project already has custom hooks. KEEP THEM.
+
+But implement the remaining two globally:
+
+### a) useLocalStorage Hook
+• Create a reusable hook inside `/src/hooks/useLocalStorage.ts`
+• It must:
+  - Accept key & initialValue
+  - Save data to localStorage
+  - Return `[value, setValue]`
+  - Update localStorage automatically when value changes
+
+### b) useContext (Global App Context)
+• Create `AppContext` inside `/src/context/AppContext.tsx`
+• This context must store:
+  - form data list
+  - addItem()
+  - editItem()
+  - deleteItem()
+
+• Wrap the whole app in `AppContextProvider`
+• Remove prop-drilling and use context values everywhere items are manipulated.
+
+-------------------------------------------------------------------------------
+4️⃣ **EDIT & DELETE ARE WORKING—KEEP THEM**
+-------------------------------------------------------------------------------
+• Keep the existing edit/delete functionality exactly as it is.
+• Just connect them to the new AppContext functions.
+
+-------------------------------------------------------------------------------
+5️⃣ **DO NOT CREATE DUPLICATE CODE**
+-------------------------------------------------------------------------------
+• Reuse all existing code.
+• Only patch broken functions.
+• Improve logic where needed.
+• Do not rewrite the whole project.
+
+-------------------------------------------------------------------------------
+6️⃣ FINAL CHECK BEFORE FINISHING
+-------------------------------------------------------------------------------
+✔ Add form correctly adds the entry  
+✔ Multi-select dropdown has a white background  
+✔ useLocalStorage + useContext fully integrated  
+✔ Edit & Delete continue to work  
+✔ No component rewrites  
+✔ No duplicate code  
+
+Make the changes now.
