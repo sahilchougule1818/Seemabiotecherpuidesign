@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { Plus, Filter, Download } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
@@ -12,12 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { StatusBadge, StatusType } from "../../components/common/StatusBadge";
 import { StatsCard } from "../../components/common/StatsCard";
 import { FlaskConical, CheckCircle, Clock, AlertTriangle } from "lucide-react";
-import { RootState } from "../../store/store";
-import { addAutoclaveRecord, addMediaBatchRecord, AutoclaveRecord, MediaBatchRecord } from "../../store/slices/mediaPreparationSlice";
+import { useAppDispatch } from "../../hooks/useAppDispatch";
+import { useAppSelector } from "../../hooks/useAppSelector";
+import { addAutoclaveRecord, addMediaBatchRecord } from "../../store/slices/mediaPreparationSlice";
 
 export function MediaPreparation() {
-  const dispatch = useDispatch();
-  const { autoclaveRecords, mediaBatchRecords } = useSelector((state: RootState) => state.mediaPreparation);
+  const dispatch = useAppDispatch();
+  const { autoclaveRecords, mediaBatchRecords } = useAppSelector((state) => state.mediaPreparation);
   
   const [isAddAutoclaveModalOpen, setIsAddAutoclaveModalOpen] = useState(false);
   const [isAddMediaModalOpen, setIsAddMediaModalOpen] = useState(false);
@@ -76,9 +76,9 @@ export function MediaPreparation() {
 
   const stats = [
     { title: "Total Batches", value: mediaBatchRecords.length.toString(), icon: FlaskConical, trend: { value: "+12% this month", isPositive: true } },
-    { title: "Active Batches", value: mediaBatchRecords.filter(b => b.status === "active").length.toString(), icon: CheckCircle },
-    { title: "Pending Autoclave", value: autoclaveRecords.filter(a => a.status === "pending").length.toString(), icon: Clock },
-    { title: "Contaminated", value: autoclaveRecords.filter(a => a.status === "contaminated").length.toString(), icon: AlertTriangle, trend: { value: "-5% vs last month", isPositive: true } },
+    { title: "Active Batches", value: mediaBatchRecords.filter((b: any) => b.status === "active").length.toString(), icon: CheckCircle },
+    { title: "Pending Autoclave", value: autoclaveRecords.filter((a: any) => a.status === "pending").length.toString(), icon: Clock },
+    { title: "Contaminated", value: autoclaveRecords.filter((a: any) => a.status === "contaminated").length.toString(), icon: AlertTriangle, trend: { value: "-5% vs last month", isPositive: true } },
   ];
 
   return (
@@ -193,7 +193,7 @@ export function MediaPreparation() {
                       </div>
                       <div className="space-y-2">
                         <Label>Status</Label>
-                        <Select value={autoclaveForm.status} onValueChange={(value) => setAutoclaveForm({...autoclaveForm, status: value as StatusType})}>
+                        <Select value={autoclaveForm.status} onValueChange={(value: any) => setAutoclaveForm({...autoclaveForm, status: value as StatusType})}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select status" />
                           </SelectTrigger>
@@ -233,7 +233,7 @@ export function MediaPreparation() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {autoclaveRecords.map((row) => (
+                  {autoclaveRecords.map((row: any) => (
                     <TableRow key={row.id} className="hover:bg-[#F3FFF4] transition-colors">
                       <TableCell>{row.id}</TableCell>
                       <TableCell>{row.date}</TableCell>
@@ -289,7 +289,7 @@ export function MediaPreparation() {
                       </div>
                       <div className="space-y-2">
                         <Label>Media Type</Label>
-                        <Select value={mediaForm.mediaType} onValueChange={(value) => setMediaForm({...mediaForm, mediaType: value})}>
+                        <Select value={mediaForm.mediaType} onValueChange={(value: any) => setMediaForm({...mediaForm, mediaType: value})}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select media type" />
                           </SelectTrigger>
@@ -326,7 +326,7 @@ export function MediaPreparation() {
                       </div>
                       <div className="space-y-2">
                         <Label>Status</Label>
-                        <Select value={mediaForm.status} onValueChange={(value) => setMediaForm({...mediaForm, status: value as StatusType})}>
+                        <Select value={mediaForm.status} onValueChange={(value: any) => setMediaForm({...mediaForm, status: value as StatusType})}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select status" />
                           </SelectTrigger>
@@ -366,7 +366,7 @@ export function MediaPreparation() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mediaBatchRecords.map((row) => (
+                  {mediaBatchRecords.map((row: any) => (
                     <TableRow key={row.id} className="hover:bg-[#F3FFF4] transition-colors">
                       <TableCell>{row.id}</TableCell>
                       <TableCell>{row.prepDate}</TableCell>
