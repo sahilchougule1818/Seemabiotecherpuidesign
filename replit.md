@@ -115,7 +115,21 @@ src/
 
 ## Latest Fixes (2025-11-23) - COMPLETED ✅
 
-### Button Component Fix & Form Validation (Latest)
+### Media Preparation UI & Functionality Enhancement (Latest)
+- **Search Panel Above Tabs**: Added unified search panel with search input and status filter dropdown above the Autoclave/Media Batch tabs
+- **Removed Inline Search Bars**: Removed duplicate search inputs from inside individual tabs for cleaner UI
+- **Edit & Delete Functionality**: Added full edit and delete functionality for both Autoclave and Media Batch records
+  - Edit button opens modal pre-filled with record data
+  - Delete button removes record with confirmation dialog
+  - Delete also available from within edit modal
+- **State Management**: Separate form states for add vs edit operations to prevent state pollution
+  - `autoclaveForm` and `mediaForm` for add operations
+  - `autoclaveEditForm` and `mediaEditForm` for edit operations
+- **Modal Cleanup**: Proper cleanup handlers reset edit form state when modals close (via ESC, outside click, or Cancel button)
+- **Redux Integration**: Uses `updateAutoclaveRecord`, `updateMediaBatchRecord`, `deleteAutoclaveRecord`, `deleteMediaBatchRecord` actions
+- **Filtering**: Combined search and status filtering applies to both Autoclave and Media Batch records
+
+### Button Component Fix & Form Validation
 - **Button Component**: Fixed to use `React.forwardRef` for proper ref forwarding with Radix UI Dialog components
 - **Form Validation**: Added validation to all modules to prevent empty field submissions
   - Indoor Sampling: validates required fields (id, date, batchID, sampleType, testType, testedBy, status)
