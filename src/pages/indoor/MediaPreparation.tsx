@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Filter, Download, Edit2, Trash2 } from "lucide-react";
+import { Plus, Filter, Download, Edit2, Trash2, Search } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
@@ -19,15 +19,15 @@ import {
   updateAutoclaveRecord, 
   deleteAutoclaveRecord,
   updateMediaBatchRecord,
-  deleteMediaBatchRecord,
-  setSearchTerm
+  deleteMediaBatchRecord
 } from "../../store/slices/mediaPreparationSlice";
 
 export function MediaPreparation() {
   const dispatch = useAppDispatch();
-  const { autoclaveRecords, mediaBatchRecords, searchTerm } = useAppSelector((state) => state.mediaPreparation);
+  const { autoclaveRecords, mediaBatchRecords } = useAppSelector((state) => state.mediaPreparation);
   
-  const [filterValue, setFilterValue] = useState<StatusType | "all">("all");
+  const [batchFilter, setBatchFilter] = useState("");
+  const [showFiltered, setShowFiltered] = useState(false);
   const [isAddAutoclaveModalOpen, setIsAddAutoclaveModalOpen] = useState(false);
   const [isAddMediaModalOpen, setIsAddMediaModalOpen] = useState(false);
   const [isEditAutoclaveModalOpen, setIsEditAutoclaveModalOpen] = useState(false);
@@ -247,25 +247,37 @@ export function MediaPreparation() {
     }
   };
 
+  const uniqueBatchCodes = useMemo(() => {
+    const batches = new Set<string>();
+    autoclaveRecords.forEach((record: any) => batches.add(record.batch));
+    mediaBatchRecords.forEach((record: any) => batches.add(record.id));
+    return Array.from(batches).sort();
+  }, [autoclaveRecords, mediaBatchRecords]);
+
+  const handleBatchFilter = () => {
+    if (batchFilter) {
+      setShowFiltered(true);
+    }
+  };
+
+  const handleShowAllData = () => {
+    setShowFiltered(false);
+    setBatchFilter("");
+  };
+
   const filteredAutoclaveRecords = useMemo(() => {
     return autoclaveRecords.filter((record: any) => {
-      const matchesSearch = searchTerm === "" || 
-        record.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        record.batch.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesFilter = filterValue === "all" || record.status === filterValue;
-      return matchesSearch && matchesFilter;
+      const matchesBatch = !showFiltered || record.batch === batchFilter || record.id === batchFilter;
+      return matchesBatch;
     });
-  }, [autoclaveRecords, searchTerm, filterValue]);
+  }, [autoclaveRecords, batchFilter, showFiltered]);
 
   const filteredMediaRecords = useMemo(() => {
     return mediaBatchRecords.filter((record: any) => {
-      const matchesSearch = searchTerm === "" || 
-        record.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        record.mediaType.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesFilter = filterValue === "all" || record.status === filterValue;
-      return matchesSearch && matchesFilter;
+      const matchesBatch = !showFiltered || record.id === batchFilter;
+      return matchesBatch;
     });
-  }, [mediaBatchRecords, searchTerm, filterValue]);
+  }, [mediaBatchRecords, batchFilter, showFiltered]);
 
   const stats = [
     { title: "Total Batches", value: mediaBatchRecords.length.toString(), icon: FlaskConical, trend: { value: "+12% this month", isPositive: true } },
@@ -304,24 +316,25 @@ export function MediaPreparation() {
       {/* Search Panel */}
       <Card className="p-6 bg-white border-border/50">
         <div className="flex items-center gap-4">
-          <Input
-            placeholder="Search batches, samples, records..."
-            className="max-w-xs"
-            value={searchTerm}
-            onChange={(e) => dispatch(setSearchTerm(e.target.value))}
-          />
-          <Select value={filterValue} onValueChange={(v: string) => setFilterValue(v as StatusType | "all")}>
+          <Select value={batchFilter} onValueChange={setBatchFilter}>
             <SelectTrigger className="max-w-xs">
-              <SelectValue placeholder="Filter by status" />
+              <SelectValue placeholder="Select batch code" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="contaminated">Contaminated</SelectItem>
+              {uniqueBatchCodes.map((batch) => (
+                <SelectItem key={batch} value={batch}>{batch}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
+          <Button onClick={handleBatchFilter} className="gap-2">
+            <Search className="w-4 h-4" />
+            Search
+          </Button>
+          {showFiltered && (
+            <Button onClick={handleShowAllData} variant="outline" className="gap-2">
+              Show All Data
+            </Button>
+          )}
         </div>
       </Card>
 

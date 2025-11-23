@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { Plus, Filter, Download, Trash2, Edit2 } from "lucide-react";
+import { Plus, Filter, Download, Trash2, Edit2, Search } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
@@ -15,16 +15,16 @@ import {
   addRecord,
   updateRecord,
   deleteRecord,
-  setSearchTerm,
   type SubcultureRecord,
 } from "../../store/slices/subcultureSlice";
 
 export function Subculturing() {
   const dispatch = useAppDispatch();
-  const { records, searchTerm } = useAppSelector((state) => state.subculture);
+  const { records } = useAppSelector((state) => state.subculture);
+  const [batchFilter, setBatchFilter] = useState("");
+  const [showFiltered, setShowFiltered] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [filterValue, setFilterValue] = useState<StatusType | "all">("all");
 
   const [form, setForm] = useState({
     id: "",
@@ -48,15 +48,29 @@ export function Subculturing() {
     { title: "Contaminated", value: records.filter((r) => r.status === "contaminated").length.toString(), icon: AlertTriangle },
   ];
 
+  const uniqueBatchCodes = useMemo(() => {
+    const batches = new Set<string>();
+    records.forEach((record) => batches.add(record.id));
+    return Array.from(batches).sort();
+  }, [records]);
+
+  const handleBatchFilter = () => {
+    if (batchFilter) {
+      setShowFiltered(true);
+    }
+  };
+
+  const handleShowAllData = () => {
+    setShowFiltered(false);
+    setBatchFilter("");
+  };
+
   const filteredRecords = useMemo(() => {
     return records.filter((record) => {
-      const matchesSearch = Object.values(record).some((val) =>
-        val?.toString().toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      const matchesFilter = filterValue === "all" || record.status === filterValue;
-      return matchesSearch && matchesFilter;
+      const matchesBatch = !showFiltered || record.id === batchFilter;
+      return matchesBatch;
     });
-  }, [records, searchTerm, filterValue]);
+  }, [records, batchFilter, showFiltered]);
 
   const handleAdd = () => {
     const newRecord: SubcultureRecord = {
@@ -205,24 +219,25 @@ export function Subculturing() {
       <Card className="p-6 bg-white/80 backdrop-blur-sm border-border/50">
         <div className="flex items-center justify-between mb-4">
           <div className="flex gap-4 items-center">
-            <Input
-              placeholder="Search subcultures..."
-              className="max-w-xs"
-              value={searchTerm}
-              onChange={(e) => dispatch(setSearchTerm(e.target.value))}
-            />
-            <Select value={filterValue} onValueChange={(v) => setFilterValue(v as StatusType | "all")}>
+            <Select value={batchFilter} onValueChange={setBatchFilter}>
               <SelectTrigger className="max-w-xs">
-                <SelectValue placeholder="Filter by status" />
+                <SelectValue placeholder="Select batch code" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="contaminated">Contaminated</SelectItem>
+                {uniqueBatchCodes.map((batch) => (
+                  <SelectItem key={batch} value={batch}>{batch}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
+            <Button onClick={handleBatchFilter} className="gap-2">
+              <Search className="w-4 h-4" />
+              Search
+            </Button>
+            {showFiltered && (
+              <Button onClick={handleShowAllData} variant="outline" className="gap-2">
+                Show All Data
+              </Button>
+            )}
           </div>
           <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
             <DialogTrigger asChild>
