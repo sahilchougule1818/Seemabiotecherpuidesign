@@ -31,7 +31,7 @@ src/
 │   └── ui/             # Radix UI components
 ├── pages/
 │   ├── indoor/
-│   │   ├── MediaPreparation.tsx    # Media prep with 8-stage workflow table
+│   │   ├── MediaPreparation.tsx    # Redux + Autoclave & Media Batch registers with add forms
 │   │   ├── Subculturing.tsx        # Redux + search/filter + add/edit/delete
 │   │   ├── Incubation.tsx          # Redux + search/filter + add/edit/delete
 │   │   └── Sampling.tsx            # With government verification fields
@@ -45,6 +45,7 @@ src/
 ├── store/
 │   ├── store.ts                    # Redux store configuration
 │   └── slices/
+│       ├── mediaPreparationSlice.ts # Media Preparation reducer + actions
 │       ├── subcultureSlice.ts      # Subculturing reducer + actions
 │       ├── incubationSlice.ts      # Incubation reducer + actions
 │       ├── secondaryHardeningSlice.ts
@@ -70,10 +71,12 @@ src/
 ## Features Implemented
 
 ### State Management (Redux)
-- Centralized Redux store with 5 slices (one per module)
+- Centralized Redux store with 9 slices (one per module)
+- Media Preparation: autoclaveRecords and mediaBatchRecords with separate add actions
 - Actions: addRecord, updateRecord, deleteRecord, setSearchTerm, setFilterStatus, setEditingId
 - Immutable state updates using Redux Toolkit
 - Automatic stats calculation from state
+- Custom hooks: useAppDispatch() and useAppSelector() for type-safe Redux access
 
 ### Search & Filter
 - Real-time search across all fields
@@ -142,6 +145,27 @@ src/
 - `/outdoor/sampling` - Outdoor Sampling
 
 ## Recent Changes
+
+### 2025-11-23: Media Preparation Page Redux Integration ✅ (Latest)
+- **Removed**: 8-Stage Tissue Culture Workflow table (no longer needed)
+- **Redux Integration**: Connected MediaPreparation component to Redux store
+  - Uses useAppDispatch() and useAppSelector() custom hooks
+  - Reads data from state.mediaPreparation slice
+  - Dynamic stats calculated from Redux data
+- **Autoclave Register Tab**:
+  - Added "Add Autoclave Cycle" button
+  - Form with fields: Autoclave ID, Date, Batch No., Temperature, Pressure, Duration, Status
+  - Data dispatched to addAutoclaveRecord action
+  - Table displays autoclaveRecords from Redux
+- **Media Batch Register Tab**:
+  - Moved "Add Media Batch" button into the tab (was at top of page)
+  - Form with fields: Batch ID, Prep Date, Media Type, Quantity, pH, Prepared By, Status
+  - Data dispatched to addMediaBatchRecord action
+  - Table displays mediaBatchRecords from Redux
+- **Live Data Updates**: All added data immediately appears in tables via Redux state
+- **Persistent Data**: Both registers use localStorage middleware for data persistence
+
+## Recent Changes (Older)
 
 ### 2025-11-23: LocalStorage Data Persistence Implementation ✅ (Latest)
 - **localStorage Middleware**: Created Redux middleware to automatically persist all state changes to browser localStorage
