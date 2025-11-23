@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, Filter, Download } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Plus, Filter, Download, Edit2, Trash2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
@@ -13,14 +13,27 @@ import { StatsCard } from "../../components/common/StatsCard";
 import { FlaskConical, CheckCircle, Clock, AlertTriangle } from "lucide-react";
 import { useAppDispatch } from "../../hooks/useAppDispatch";
 import { useAppSelector } from "../../hooks/useAppSelector";
-import { addAutoclaveRecord, addMediaBatchRecord } from "../../store/slices/mediaPreparationSlice";
+import { 
+  addAutoclaveRecord, 
+  addMediaBatchRecord, 
+  updateAutoclaveRecord, 
+  deleteAutoclaveRecord,
+  updateMediaBatchRecord,
+  deleteMediaBatchRecord,
+  setSearchTerm
+} from "../../store/slices/mediaPreparationSlice";
 
 export function MediaPreparation() {
   const dispatch = useAppDispatch();
-  const { autoclaveRecords, mediaBatchRecords } = useAppSelector((state) => state.mediaPreparation);
+  const { autoclaveRecords, mediaBatchRecords, searchTerm } = useAppSelector((state) => state.mediaPreparation);
   
+  const [filterValue, setFilterValue] = useState<StatusType | "all">("all");
   const [isAddAutoclaveModalOpen, setIsAddAutoclaveModalOpen] = useState(false);
   const [isAddMediaModalOpen, setIsAddMediaModalOpen] = useState(false);
+  const [isEditAutoclaveModalOpen, setIsEditAutoclaveModalOpen] = useState(false);
+  const [isEditMediaModalOpen, setIsEditMediaModalOpen] = useState(false);
+  const [editingAutoclaveRecord, setEditingAutoclaveRecord] = useState<any>(null);
+  const [editingMediaRecord, setEditingMediaRecord] = useState<any>(null);
   
   const [autoclaveForm, setAutoclaveForm] = useState({
     id: "",
@@ -32,7 +45,27 @@ export function MediaPreparation() {
     status: "pending" as StatusType
   });
   
+  const [autoclaveEditForm, setAutoclaveEditForm] = useState({
+    id: "",
+    date: "",
+    batch: "",
+    temperature: "",
+    pressure: "",
+    duration: "",
+    status: "pending" as StatusType
+  });
+  
   const [mediaForm, setMediaForm] = useState({
+    id: "",
+    prepDate: "",
+    mediaType: "",
+    quantity: "",
+    pH: "",
+    preparedBy: "",
+    status: "pending" as StatusType
+  });
+  
+  const [mediaEditForm, setMediaEditForm] = useState({
     id: "",
     prepDate: "",
     mediaType: "",
@@ -74,6 +107,166 @@ export function MediaPreparation() {
     }
   };
 
+  const handleEditAutoclave = (record: any) => {
+    setEditingAutoclaveRecord(record);
+    setAutoclaveEditForm({
+      id: record.id,
+      date: record.date,
+      batch: record.batch,
+      temperature: record.temperature,
+      pressure: record.pressure,
+      duration: record.duration,
+      status: record.status,
+    });
+    setIsEditAutoclaveModalOpen(true);
+  };
+
+  const handleSaveAutoclaveEdit = () => {
+    if (autoclaveEditForm.id && autoclaveEditForm.date && autoclaveEditForm.batch) {
+      dispatch(updateAutoclaveRecord(autoclaveEditForm));
+      setEditingAutoclaveRecord(null);
+      setAutoclaveEditForm({
+        id: "",
+        date: "",
+        batch: "",
+        temperature: "",
+        pressure: "",
+        duration: "",
+        status: "pending"
+      });
+      setIsEditAutoclaveModalOpen(false);
+    }
+  };
+
+  const handleDeleteAutoclave = (id: string) => {
+    if (window.confirm("Are you sure you want to delete this autoclave record?")) {
+      dispatch(deleteAutoclaveRecord(id));
+    }
+  };
+
+  const handleDeleteAutoclaveFromEdit = () => {
+    if (editingAutoclaveRecord) {
+      dispatch(deleteAutoclaveRecord(editingAutoclaveRecord.id));
+      setEditingAutoclaveRecord(null);
+      setAutoclaveEditForm({
+        id: "",
+        date: "",
+        batch: "",
+        temperature: "",
+        pressure: "",
+        duration: "",
+        status: "pending"
+      });
+      setIsEditAutoclaveModalOpen(false);
+    }
+  };
+
+  const handleEditMedia = (record: any) => {
+    setEditingMediaRecord(record);
+    setMediaEditForm({
+      id: record.id,
+      prepDate: record.prepDate,
+      mediaType: record.mediaType,
+      quantity: record.quantity,
+      pH: record.pH,
+      preparedBy: record.preparedBy,
+      status: record.status,
+    });
+    setIsEditMediaModalOpen(true);
+  };
+
+  const handleSaveMediaEdit = () => {
+    if (mediaEditForm.id && mediaEditForm.prepDate && mediaEditForm.mediaType) {
+      dispatch(updateMediaBatchRecord(mediaEditForm));
+      setEditingMediaRecord(null);
+      setMediaEditForm({
+        id: "",
+        prepDate: "",
+        mediaType: "",
+        quantity: "",
+        pH: "",
+        preparedBy: "",
+        status: "pending"
+      });
+      setIsEditMediaModalOpen(false);
+    }
+  };
+
+  const handleDeleteMedia = (id: string) => {
+    if (window.confirm("Are you sure you want to delete this media batch record?")) {
+      dispatch(deleteMediaBatchRecord(id));
+    }
+  };
+
+  const handleDeleteMediaFromEdit = () => {
+    if (editingMediaRecord) {
+      dispatch(deleteMediaBatchRecord(editingMediaRecord.id));
+      setEditingMediaRecord(null);
+      setMediaEditForm({
+        id: "",
+        prepDate: "",
+        mediaType: "",
+        quantity: "",
+        pH: "",
+        preparedBy: "",
+        status: "pending"
+      });
+      setIsEditMediaModalOpen(false);
+    }
+  };
+
+  const handleAutoclaveEditModalClose = (open: boolean) => {
+    setIsEditAutoclaveModalOpen(open);
+    if (!open) {
+      setEditingAutoclaveRecord(null);
+      setAutoclaveEditForm({
+        id: "",
+        date: "",
+        batch: "",
+        temperature: "",
+        pressure: "",
+        duration: "",
+        status: "pending"
+      });
+    }
+  };
+
+  const handleMediaEditModalClose = (open: boolean) => {
+    setIsEditMediaModalOpen(open);
+    if (!open) {
+      setEditingMediaRecord(null);
+      setMediaEditForm({
+        id: "",
+        prepDate: "",
+        mediaType: "",
+        quantity: "",
+        pH: "",
+        preparedBy: "",
+        status: "pending"
+      });
+    }
+  };
+
+  const filteredAutoclaveRecords = useMemo(() => {
+    return autoclaveRecords.filter((record: any) => {
+      const matchesSearch = searchTerm === "" || 
+        record.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        record.batch.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesFilter = filterValue === "all" || record.status === filterValue;
+      return matchesSearch && matchesFilter;
+    });
+  }, [autoclaveRecords, searchTerm, filterValue]);
+
+  const filteredMediaRecords = useMemo(() => {
+    return mediaBatchRecords.filter((record: any) => {
+      const matchesSearch = searchTerm === "" || 
+        record.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        record.mediaType.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesFilter = filterValue === "all" || record.status === filterValue;
+      return matchesSearch && matchesFilter;
+    });
+  }, [mediaBatchRecords, searchTerm, filterValue]);
+
   const stats = [
     { title: "Total Batches", value: mediaBatchRecords.length.toString(), icon: FlaskConical, trend: { value: "+12% this month", isPositive: true } },
     { title: "Active Batches", value: mediaBatchRecords.filter((b: any) => b.status === "active").length.toString(), icon: CheckCircle },
@@ -108,6 +301,30 @@ export function MediaPreparation() {
         ))}
       </div>
 
+      {/* Search Panel */}
+      <Card className="p-6 bg-white border-border/50">
+        <div className="flex items-center gap-4">
+          <Input
+            placeholder="Search batches, samples, records..."
+            className="max-w-xs"
+            value={searchTerm}
+            onChange={(e) => dispatch(setSearchTerm(e.target.value))}
+          />
+          <Select value={filterValue} onValueChange={(v: string) => setFilterValue(v as StatusType | "all")}>
+            <SelectTrigger className="max-w-xs">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="contaminated">Contaminated</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </Card>
+
       {/* Tabs for Different Registers */}
       <Card className="p-6 bg-white border-border/50">
         <Tabs defaultValue="autoclave" className="space-y-4">
@@ -129,10 +346,8 @@ export function MediaPreparation() {
           <TabsContent value="autoclave" className="space-y-4">
             <div className="flex items-center justify-between">
               <h3>Autoclave Register</h3>
-              <div className="flex gap-2">
-                <Input placeholder="Search autoclave records..." className="max-w-xs" />
-                <Dialog open={isAddAutoclaveModalOpen} onOpenChange={setIsAddAutoclaveModalOpen}>
-                  <DialogTrigger asChild>
+              <Dialog open={isAddAutoclaveModalOpen} onOpenChange={setIsAddAutoclaveModalOpen}>
+                <DialogTrigger asChild>
                     <Button className="gap-2 bg-[#4CAF50] hover:bg-[#45a049]">
                       <Plus className="w-4 h-4" />
                       Add Autoclave Cycle
@@ -216,7 +431,6 @@ export function MediaPreparation() {
                     </div>
                   </DialogContent>
                 </Dialog>
-              </div>
             </div>
             <div className="border rounded-lg overflow-hidden">
               <Table>
@@ -233,7 +447,7 @@ export function MediaPreparation() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {autoclaveRecords.map((row: any) => (
+                  {filteredAutoclaveRecords.map((row: any) => (
                     <TableRow key={row.id} className="hover:bg-[#F3FFF4] transition-colors">
                       <TableCell>{row.id}</TableCell>
                       <TableCell>{row.date}</TableCell>
@@ -244,8 +458,13 @@ export function MediaPreparation() {
                       <TableCell>
                         <StatusBadge status={row.status} />
                       </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm">Edit</Button>
+                      <TableCell className="flex gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => handleEditAutoclave(row)}>
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteAutoclave(row.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -257,9 +476,7 @@ export function MediaPreparation() {
           <TabsContent value="media" className="space-y-4">
             <div className="flex items-center justify-between">
               <h3>Media Batch Register</h3>
-              <div className="flex gap-2">
-                <Input placeholder="Search media batches..." className="max-w-xs" />
-                <Dialog open={isAddMediaModalOpen} onOpenChange={setIsAddMediaModalOpen}>
+              <Dialog open={isAddMediaModalOpen} onOpenChange={setIsAddMediaModalOpen}>
                   <DialogTrigger asChild>
                     <Button className="gap-2 bg-[#4CAF50] hover:bg-[#45a049]">
                       <Plus className="w-4 h-4" />
@@ -349,7 +566,6 @@ export function MediaPreparation() {
                     </div>
                   </DialogContent>
                 </Dialog>
-              </div>
             </div>
             <div className="border rounded-lg overflow-hidden">
               <Table>
@@ -366,7 +582,7 @@ export function MediaPreparation() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mediaBatchRecords.map((row: any) => (
+                  {filteredMediaRecords.map((row: any) => (
                     <TableRow key={row.id} className="hover:bg-[#F3FFF4] transition-colors">
                       <TableCell>{row.id}</TableCell>
                       <TableCell>{row.prepDate}</TableCell>
@@ -377,8 +593,13 @@ export function MediaPreparation() {
                       <TableCell>
                         <StatusBadge status={row.status} />
                       </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm">Edit</Button>
+                      <TableCell className="flex gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => handleEditMedia(row)}>
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteMedia(row.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -388,6 +609,189 @@ export function MediaPreparation() {
           </TabsContent>
         </Tabs>
       </Card>
+
+      {/* Edit Autoclave Modal */}
+      <Dialog open={isEditAutoclaveModalOpen} onOpenChange={handleAutoclaveEditModalClose}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Autoclave Record</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4 py-4">
+            <div className="space-y-2">
+              <Label>Autoclave ID</Label>
+              <Input 
+                placeholder="AC-XXX" 
+                value={autoclaveEditForm.id}
+                onChange={(e) => setAutoclaveEditForm({...autoclaveEditForm, id: e.target.value})}
+                disabled
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Date</Label>
+              <Input 
+                type="date"
+                value={autoclaveEditForm.date}
+                onChange={(e) => setAutoclaveEditForm({...autoclaveEditForm, date: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Batch No.</Label>
+              <Input 
+                placeholder="MB-2024-XXX"
+                value={autoclaveEditForm.batch}
+                onChange={(e) => setAutoclaveEditForm({...autoclaveEditForm, batch: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Temperature</Label>
+              <Input 
+                placeholder="121°C"
+                value={autoclaveEditForm.temperature}
+                onChange={(e) => setAutoclaveEditForm({...autoclaveEditForm, temperature: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Pressure</Label>
+              <Input 
+                placeholder="15 PSI"
+                value={autoclaveEditForm.pressure}
+                onChange={(e) => setAutoclaveEditForm({...autoclaveEditForm, pressure: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Duration</Label>
+              <Input 
+                placeholder="20 min"
+                value={autoclaveEditForm.duration}
+                onChange={(e) => setAutoclaveEditForm({...autoclaveEditForm, duration: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select value={autoclaveEditForm.status} onValueChange={(value: any) => setAutoclaveEditForm({...autoclaveEditForm, status: value as StatusType})}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="contaminated">Contaminated</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-between pt-4">
+            <div>
+              <Button variant="destructive" onClick={handleDeleteAutoclaveFromEdit}>
+                Delete Entry
+              </Button>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setIsEditAutoclaveModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button className="bg-[#4CAF50] hover:bg-[#45a049]" onClick={handleSaveAutoclaveEdit}>
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Media Batch Modal */}
+      <Dialog open={isEditMediaModalOpen} onOpenChange={handleMediaEditModalClose}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Media Batch Record</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4 py-4">
+            <div className="space-y-2">
+              <Label>Batch ID</Label>
+              <Input 
+                placeholder="MB-2024-XXX" 
+                value={mediaEditForm.id}
+                onChange={(e) => setMediaEditForm({...mediaEditForm, id: e.target.value})}
+                disabled
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Prep Date</Label>
+              <Input 
+                type="date"
+                value={mediaEditForm.prepDate}
+                onChange={(e) => setMediaEditForm({...mediaEditForm, prepDate: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Media Type</Label>
+              <Select value={mediaEditForm.mediaType} onValueChange={(value: any) => setMediaEditForm({...mediaEditForm, mediaType: value})}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Select media type" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="MS Medium">MS Medium</SelectItem>
+                  <SelectItem value="WPM Medium">WPM Medium</SelectItem>
+                  <SelectItem value="B5 Medium">B5 Medium</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Quantity</Label>
+              <Input 
+                placeholder="5L"
+                value={mediaEditForm.quantity}
+                onChange={(e) => setMediaEditForm({...mediaEditForm, quantity: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>pH</Label>
+              <Input 
+                placeholder="5.8"
+                value={mediaEditForm.pH}
+                onChange={(e) => setMediaEditForm({...mediaEditForm, pH: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Prepared By</Label>
+              <Input 
+                placeholder="Employee name"
+                value={mediaEditForm.preparedBy}
+                onChange={(e) => setMediaEditForm({...mediaEditForm, preparedBy: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select value={mediaEditForm.status} onValueChange={(value: any) => setMediaEditForm({...mediaEditForm, status: value as StatusType})}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="contaminated">Contaminated</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-between pt-4">
+            <div>
+              <Button variant="destructive" onClick={handleDeleteMediaFromEdit}>
+                Delete Entry
+              </Button>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setIsEditMediaModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button className="bg-[#4CAF50] hover:bg-[#45a049]" onClick={handleSaveMediaEdit}>
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
