@@ -16,16 +16,14 @@ import {
   addRecord,
   updateRecord,
   deleteRecord,
-  setSearchTerm,
   type IndoorSamplingRecord,
 } from "../../store/slices/indoorSamplingSlice";
 
 export function Sampling() {
   const dispatch = useAppDispatch();
-  const { records, searchTerm } = useAppSelector((state) => state.indoorSampling);
+  const { records } = useAppSelector((state) => state.indoorSampling);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [filterValue, setFilterValue] = useState<StatusType | "all">("all");
   const [batchFilter, setBatchFilter] = useState("");
   const [showFiltered, setShowFiltered] = useState(false);
 
@@ -205,7 +203,7 @@ export function Sampling() {
       </div>
 
       <Card className="p-6 bg-white/80 backdrop-blur-sm border-border/50">
-        <div className="space-y-4">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
             <Select value={batchFilter} onValueChange={setBatchFilter}>
               <SelectTrigger className="max-w-xs">
@@ -221,33 +219,13 @@ export function Sampling() {
               <Search className="w-4 h-4" />
               Search
             </Button>
-            <Button onClick={handleShowAllData} variant="outline" className="gap-2">
-              Show All Data
-            </Button>
+            {showFiltered && (
+              <Button onClick={handleShowAllData} variant="outline" className="gap-2">
+                Show All Data
+              </Button>
+            )}
           </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex gap-4 items-center">
-              <Input
-                placeholder="Search samples..."
-                className="max-w-xs"
-                value={searchTerm}
-                onChange={(e) => dispatch(setSearchTerm(e.target.value))}
-              />
-              <Select value={filterValue} onValueChange={(v) => setFilterValue(v as StatusType | "all")}>
-                <SelectTrigger className="max-w-xs">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="contaminated">Contaminated</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
               <DialogTrigger asChild>
                 <Button className="gap-2 bg-[#4CAF50] hover:bg-[#45a049]">
                   <Plus className="w-4 h-4" />
@@ -351,7 +329,6 @@ export function Sampling() {
                 </div>
               </DialogContent>
             </Dialog>
-          </div>
         </div>
         <div className="border rounded-lg overflow-hidden mt-4">
           <Table>

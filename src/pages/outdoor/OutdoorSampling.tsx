@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { Plus, Filter, Download, Trash2, Edit2 } from "lucide-react";
+import { Plus, Filter, Download, Trash2, Edit2, Search } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
@@ -16,16 +16,16 @@ import {
   addRecord,
   updateRecord,
   deleteRecord,
-  setSearchTerm,
   type OutdoorSamplingRecord,
 } from "../../store/slices/outdoorSamplingSlice";
 
 export function OutdoorSampling() {
   const dispatch = useAppDispatch();
-  const { records, searchTerm } = useAppSelector((state) => state.outdoorSampling);
+  const { records } = useAppSelector((state) => state.outdoorSampling);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [filterValue, setFilterValue] = useState<StatusType | "all">("all");
+  const [batchFilter, setBatchFilter] = useState("");
+  const [showFiltered, setShowFiltered] = useState(false);
 
   const [form, setForm] = useState({
     id: "",
@@ -52,15 +52,17 @@ export function OutdoorSampling() {
     { title: "Failed Tests", value: records.filter((r) => r.result === "Fail").length.toString(), icon: XCircle },
   ];
 
+  const uniqueBatchCodes = useMemo(() => {
+    const batches = new Set(records.map((r) => r.batchID));
+    return Array.from(batches).sort();
+  }, [records]);
+
   const filteredRecords = useMemo(() => {
     return records.filter((record) => {
-      const matchesSearch = Object.values(record).some((val) =>
-        val?.toString().toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      const matchesFilter = filterValue === "all" || record.status === filterValue;
-      return matchesSearch && matchesFilter;
+      const matchesBatch = !showFiltered || record.batchID === batchFilter;
+      return matchesBatch;
     });
-  }, [records, searchTerm, filterValue]);
+  }, [records, batchFilter, showFiltered]);
 
   const handleAdd = () => {
     const newRecord: OutdoorSamplingRecord = {
@@ -202,6 +204,15 @@ export function OutdoorSampling() {
     dispatch(deleteRecord(id));
   }, [dispatch]);
 
+  const handleBatchFilter = () => {
+    setShowFiltered(true);
+  };
+
+  const handleShowAllData = () => {
+    setShowFiltered(false);
+    setBatchFilter("");
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -229,25 +240,26 @@ export function OutdoorSampling() {
 
       <Card className="p-6 bg-white/80 backdrop-blur-sm border-border/50">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex gap-4 items-center">
-            <Input
-              placeholder="Search sampling records..."
-              className="max-w-xs"
-              value={searchTerm}
-              onChange={(e) => dispatch(setSearchTerm(e.target.value))}
-            />
-            <Select value={filterValue} onValueChange={(v) => setFilterValue(v as StatusType | "all")}>
+          <div className="flex items-center gap-4">
+            <Select value={batchFilter} onValueChange={setBatchFilter}>
               <SelectTrigger className="max-w-xs">
-                <SelectValue placeholder="Filter by status" />
+                <SelectValue placeholder="Select batch code" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="contaminated">Contaminated</SelectItem>
+                {uniqueBatchCodes.map((batch) => (
+                  <SelectItem key={batch} value={batch}>{batch}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
+            <Button onClick={handleBatchFilter} className="gap-2">
+              <Search className="w-4 h-4" />
+              Search
+            </Button>
+            {showFiltered && (
+              <Button onClick={handleShowAllData} variant="outline" className="gap-2">
+                Show All Data
+              </Button>
+            )}
           </div>
           <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
             <DialogTrigger asChild>
