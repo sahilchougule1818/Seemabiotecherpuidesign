@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Plus, Filter, Download, Trash2, Edit2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
@@ -16,35 +16,27 @@ import {
   updateRecord,
   deleteRecord,
   setSearchTerm,
-  setFilterStatus,
-  setEditingId,
   type SubcultureRecord,
 } from "../../store/slices/subcultureSlice";
 
 export function Subculturing() {
   const dispatch = useAppDispatch();
-  const { records, searchTerm, filterStatus, editingId } = useAppSelector((state) => state.subculture);
+  const { records, searchTerm } = useAppSelector((state) => state.subculture);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [filterValue, setFilterValue] = useState<StatusType | "all">("all");
 
-  const formRefs = {
-    id: useRef<HTMLInputElement>(null),
-    date: useRef<HTMLInputElement>(null),
-    sourceID: useRef<HTMLInputElement>(null),
-    crop: useRef<HTMLSelectElement>(null),
-    variety: useRef<HTMLInputElement>(null),
-    stage: useRef<HTMLSelectElement>(null),
-    explants: useRef<HTMLInputElement>(null),
-    mediaUsed: useRef<HTMLSelectElement>(null),
-    technician: useRef<HTMLInputElement>(null),
-    status: useRef<HTMLSelectElement>(null),
-  };
-
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
+    id: "",
+    date: "",
+    sourceID: "",
     crop: "",
+    variety: "",
     stage: "",
+    explants: "",
     mediaUsed: "",
-    status: "",
+    technician: "",
+    status: "pending" as StatusType,
   });
 
   const [editingRecord, setEditingRecord] = useState<SubcultureRecord | null>(null);
@@ -66,79 +58,124 @@ export function Subculturing() {
     });
   }, [records, searchTerm, filterValue]);
 
-  const handleAdd = useCallback(() => {
-    const newID = formRefs.id.current?.value || `SC-2024-${String(records.length + 1).padStart(3, '0')}`;
+  const handleAdd = () => {
     const newRecord: SubcultureRecord = {
-      id: newID,
-      date: formRefs.date.current?.value || new Date().toISOString().split('T')[0],
-      sourceID: formRefs.sourceID.current?.value || "",
-      crop: formData.crop || "Banana",
-      variety: formRefs.variety.current?.value || "",
-      stage: formData.stage || "Stage 1",
-      explants: parseInt(formRefs.explants.current?.value || "0") || 0,
-      mediaUsed: formData.mediaUsed || "MS Medium",
-      technician: formRefs.technician.current?.value || "Lab Technician",
-      status: (formData.status || "pending") as StatusType,
+      id: form.id,
+      date: form.date,
+      sourceID: form.sourceID,
+      crop: form.crop,
+      variety: form.variety,
+      stage: form.stage,
+      explants: parseInt(form.explants) || 0,
+      mediaUsed: form.mediaUsed,
+      technician: form.technician,
+      status: form.status,
     };
-
-    if (editingId && editingRecord) {
-      dispatch(updateRecord({ ...newRecord, id: editingRecord.id }));
-      dispatch(setEditingId(null));
-      setEditingRecord(null);
-    } else {
-      dispatch(addRecord(newRecord));
-    }
-
-    setIsAddModalOpen(false);
-    Object.values(formRefs).forEach((ref) => {
-      if (ref.current && 'value' in ref.current) ref.current.value = "";
+    dispatch(addRecord(newRecord));
+    setForm({
+      id: "",
+      date: "",
+      sourceID: "",
+      crop: "",
+      variety: "",
+      stage: "",
+      explants: "",
+      mediaUsed: "",
+      technician: "",
+      status: "pending",
     });
-    setFormData({ crop: "", stage: "", mediaUsed: "", status: "" });
-  }, [dispatch, editingId, editingRecord, records.length, formData]);
+    setIsAddModalOpen(false);
+  };
 
   const handleEdit = useCallback((record: SubcultureRecord) => {
     setEditingRecord(record);
-    dispatch(setEditingId(record.id));
-    setFormData({
+    setForm({
+      id: record.id,
+      date: record.date,
+      sourceID: record.sourceID,
       crop: record.crop,
+      variety: record.variety,
       stage: record.stage,
+      explants: record.explants.toString(),
       mediaUsed: record.mediaUsed,
+      technician: record.technician,
       status: record.status,
     });
+    setIsEditModalOpen(true);
+  }, []);
 
-    setTimeout(() => {
-      if (formRefs.id.current) formRefs.id.current.value = record.id;
-      if (formRefs.date.current) formRefs.date.current.value = record.date;
-      if (formRefs.sourceID.current) formRefs.sourceID.current.value = record.sourceID;
-      if (formRefs.crop.current) formRefs.crop.current.value = record.crop;
-      if (formRefs.variety.current) formRefs.variety.current.value = record.variety;
-      if (formRefs.stage.current) formRefs.stage.current.value = record.stage;
-      if (formRefs.explants.current) formRefs.explants.current.value = record.explants.toString();
-      if (formRefs.mediaUsed.current) formRefs.mediaUsed.current.value = record.mediaUsed;
-      if (formRefs.technician.current) formRefs.technician.current.value = record.technician;
-      if (formRefs.status.current) formRefs.status.current.value = record.status;
-    }, 0);
+  const handleSaveEdit = () => {
+    if (editingRecord) {
+      const updatedRecord: SubcultureRecord = {
+        id: form.id,
+        date: form.date,
+        sourceID: form.sourceID,
+        crop: form.crop,
+        variety: form.variety,
+        stage: form.stage,
+        explants: parseInt(form.explants) || 0,
+        mediaUsed: form.mediaUsed,
+        technician: form.technician,
+        status: form.status,
+      };
+      dispatch(updateRecord(updatedRecord));
+      setForm({
+        id: "",
+        date: "",
+        sourceID: "",
+        crop: "",
+        variety: "",
+        stage: "",
+        explants: "",
+        mediaUsed: "",
+        technician: "",
+        status: "pending",
+      });
+      setEditingRecord(null);
+      setIsEditModalOpen(false);
+    }
+  };
 
-    setIsAddModalOpen(true);
-  }, [dispatch]);
+  const handleDeleteFromEdit = () => {
+    if (editingRecord) {
+      dispatch(deleteRecord(editingRecord.id));
+      setForm({
+        id: "",
+        date: "",
+        sourceID: "",
+        crop: "",
+        variety: "",
+        stage: "",
+        explants: "",
+        mediaUsed: "",
+        technician: "",
+        status: "pending",
+      });
+      setEditingRecord(null);
+      setIsEditModalOpen(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setForm({
+      id: "",
+      date: "",
+      sourceID: "",
+      crop: "",
+      variety: "",
+      stage: "",
+      explants: "",
+      mediaUsed: "",
+      technician: "",
+      status: "pending",
+    });
+    setEditingRecord(null);
+    setIsEditModalOpen(false);
+  };
 
   const handleDelete = useCallback((id: string) => {
     dispatch(deleteRecord(id));
   }, [dispatch]);
-
-  const handleCloseModal = useCallback(() => {
-    setIsAddModalOpen(false);
-    dispatch(setEditingId(null));
-    setEditingRecord(null);
-    Object.values(formRefs).forEach((ref) => {
-      if (ref.current) ref.current.value = "";
-    });
-    setFormData({ crop: "", stage: "", mediaUsed: "", status: "" });
-  }, [dispatch]);
-
-  useEffect(() => {
-    dispatch(setFilterStatus(filterValue));
-  }, [filterValue, dispatch]);
 
   return (
     <div className="space-y-6">
@@ -156,107 +193,6 @@ export function Subculturing() {
             <Download className="w-4 h-4" />
             Export
           </Button>
-          <Dialog open={isAddModalOpen} onOpenChange={(open) => { if (!open) { handleCloseModal(); } else { setIsAddModalOpen(true); } }}>
-            <DialogTrigger asChild>
-              <Button className="gap-2 bg-[#4CAF50] hover:bg-[#45a049]">
-                <Plus className="w-4 h-4" />
-                Add Subculture
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>{editingId ? "Edit Subculture Record" : "Add New Subculture Record"}</DialogTitle>
-              </DialogHeader>
-              <div className="grid grid-cols-2 gap-4 py-4">
-                <div className="space-y-2">
-                  <Label>Subculture ID</Label>
-                  <Input ref={formRefs.id} placeholder="SC-2024-XXX" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Date</Label>
-                  <Input ref={formRefs.date} type="date" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Source ID</Label>
-                  <Input ref={formRefs.sourceID} placeholder="MB-2024-XXX" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Crop Type</Label>
-                  <Select value={formData.crop} onValueChange={(v) => { setFormData(prev => ({ ...prev, crop: v })); if (formRefs.crop.current) formRefs.crop.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.crop as any} className="bg-white">
-                      <SelectValue placeholder="Select crop" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="banana">Banana</SelectItem>
-                      <SelectItem value="bamboo">Bamboo</SelectItem>
-                      <SelectItem value="teak">Teak</SelectItem>
-                      <SelectItem value="ornamental">Ornamental</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Variety</Label>
-                  <Input ref={formRefs.variety} placeholder="Enter variety" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Stage</Label>
-                  <Select value={formData.stage} onValueChange={(v) => { setFormData(prev => ({ ...prev, stage: v })); if (formRefs.stage.current) formRefs.stage.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.stage as any} className="bg-white">
-                      <SelectValue placeholder="Select stage" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="Stage 1">Stage 1</SelectItem>
-                      <SelectItem value="Stage 2">Stage 2</SelectItem>
-                      <SelectItem value="Stage 3">Stage 3</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Number of Explants</Label>
-                  <Input ref={formRefs.explants} type="number" placeholder="25" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Media Used</Label>
-                  <Select value={formData.mediaUsed} onValueChange={(v) => { setFormData(prev => ({ ...prev, mediaUsed: v })); if (formRefs.mediaUsed.current) formRefs.mediaUsed.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.mediaUsed as any} className="bg-white">
-                      <SelectValue placeholder="Select media" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="MS Medium">MS Medium</SelectItem>
-                      <SelectItem value="WPM Medium">WPM Medium</SelectItem>
-                      <SelectItem value="B5 Medium">B5 Medium</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Technician</Label>
-                  <Input ref={formRefs.technician} placeholder="Technician name" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <Select value={formData.status} onValueChange={(v) => { setFormData(prev => ({ ...prev, status: v })); if (formRefs.status.current) formRefs.status.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.status as any} className="bg-white">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="contaminated">Contaminated</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={handleCloseModal}>
-                  Cancel
-                </Button>
-                <Button className="bg-[#4CAF50] hover:bg-[#45a049]" onClick={handleAdd}>
-                  {editingId ? "Update" : "Save"} Record
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
         </div>
       </div>
 
@@ -288,9 +224,109 @@ export function Subculturing() {
               </SelectContent>
             </Select>
           </div>
-          <h3>Subculturing Register</h3>
+          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2 bg-[#4CAF50] hover:bg-[#45a049]">
+                <Plus className="w-4 h-4" />
+                Add Subculture
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Add New Subculture Record</DialogTitle>
+              </DialogHeader>
+              <div className="grid grid-cols-2 gap-4 py-4">
+                <div className="space-y-2">
+                  <Label>Subculture ID</Label>
+                  <Input placeholder="SC-2024-XXX" value={form.id} onChange={(e) => setForm({...form, id: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Date</Label>
+                  <Input type="date" value={form.date} onChange={(e) => setForm({...form, date: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Source ID</Label>
+                  <Input placeholder="MB-2024-XXX" value={form.sourceID} onChange={(e) => setForm({...form, sourceID: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Crop Type</Label>
+                  <Select value={form.crop} onValueChange={(v) => setForm({...form, crop: v})}>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select crop" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="Banana">Banana</SelectItem>
+                      <SelectItem value="Bamboo">Bamboo</SelectItem>
+                      <SelectItem value="Teak">Teak</SelectItem>
+                      <SelectItem value="Ornamental">Ornamental</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Variety</Label>
+                  <Input placeholder="Enter variety" value={form.variety} onChange={(e) => setForm({...form, variety: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Stage</Label>
+                  <Select value={form.stage} onValueChange={(v) => setForm({...form, stage: v})}>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select stage" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="Stage 1">Stage 1</SelectItem>
+                      <SelectItem value="Stage 2">Stage 2</SelectItem>
+                      <SelectItem value="Stage 3">Stage 3</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Number of Explants</Label>
+                  <Input type="number" placeholder="25" value={form.explants} onChange={(e) => setForm({...form, explants: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Media Used</Label>
+                  <Select value={form.mediaUsed} onValueChange={(v) => setForm({...form, mediaUsed: v})}>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select media" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="MS Medium">MS Medium</SelectItem>
+                      <SelectItem value="WPM Medium">WPM Medium</SelectItem>
+                      <SelectItem value="B5 Medium">B5 Medium</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Technician</Label>
+                  <Input placeholder="Technician name" value={form.technician} onChange={(e) => setForm({...form, technician: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select value={form.status} onValueChange={(v: any) => setForm({...form, status: v})}>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="contaminated">Contaminated</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button className="bg-[#4CAF50] hover:bg-[#45a049]" onClick={handleAdd}>
+                  Save Record
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
-        <div className="border rounded-lg overflow-hidden">
+        <div className="border rounded-lg overflow-hidden mt-4">
           <Table>
             <TableHeader>
               <TableRow className="bg-[#F5F5F5]">
@@ -330,6 +366,107 @@ export function Subculturing() {
           </Table>
         </div>
       </Card>
+
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Subculture Record</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4 py-4">
+            <div className="space-y-2">
+              <Label>Subculture ID</Label>
+              <Input placeholder="SC-2024-XXX" value={form.id} onChange={(e) => setForm({...form, id: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Date</Label>
+              <Input type="date" value={form.date} onChange={(e) => setForm({...form, date: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Source ID</Label>
+              <Input placeholder="MB-2024-XXX" value={form.sourceID} onChange={(e) => setForm({...form, sourceID: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Crop Type</Label>
+              <Select value={form.crop} onValueChange={(v) => setForm({...form, crop: v})}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Select crop" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="Banana">Banana</SelectItem>
+                  <SelectItem value="Bamboo">Bamboo</SelectItem>
+                  <SelectItem value="Teak">Teak</SelectItem>
+                  <SelectItem value="Ornamental">Ornamental</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Variety</Label>
+              <Input placeholder="Enter variety" value={form.variety} onChange={(e) => setForm({...form, variety: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Stage</Label>
+              <Select value={form.stage} onValueChange={(v) => setForm({...form, stage: v})}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Select stage" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="Stage 1">Stage 1</SelectItem>
+                  <SelectItem value="Stage 2">Stage 2</SelectItem>
+                  <SelectItem value="Stage 3">Stage 3</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Number of Explants</Label>
+              <Input type="number" placeholder="25" value={form.explants} onChange={(e) => setForm({...form, explants: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Media Used</Label>
+              <Select value={form.mediaUsed} onValueChange={(v) => setForm({...form, mediaUsed: v})}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Select media" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="MS Medium">MS Medium</SelectItem>
+                  <SelectItem value="WPM Medium">WPM Medium</SelectItem>
+                  <SelectItem value="B5 Medium">B5 Medium</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Technician</Label>
+              <Input placeholder="Technician name" value={form.technician} onChange={(e) => setForm({...form, technician: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select value={form.status} onValueChange={(v: any) => setForm({...form, status: v})}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="contaminated">Contaminated</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-between">
+            <Button variant="destructive" onClick={handleDeleteFromEdit}>
+              Delete Entry
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleCancelEdit}>
+                Cancel
+              </Button>
+              <Button className="bg-[#4CAF50] hover:bg-[#45a049]" onClick={handleSaveEdit}>
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

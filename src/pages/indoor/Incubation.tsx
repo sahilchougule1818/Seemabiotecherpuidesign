@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Plus, Filter, Download, Trash2, Edit2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
@@ -16,34 +16,30 @@ import {
   updateRecord,
   deleteRecord,
   setSearchTerm,
-  setFilterStatus,
-  setEditingId,
   type IncubationRecord,
 } from "../../store/slices/incubationSlice";
 
 export function Incubation() {
   const dispatch = useAppDispatch();
-  const { records, searchTerm, filterStatus, editingId } = useAppSelector((state) => state.incubation);
+  const { records, searchTerm } = useAppSelector((state) => state.incubation);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [filterValue, setFilterValue] = useState<StatusType | "all">("all");
-  const [editingRecord, setEditingRecord] = useState<IncubationRecord | null>(null);
-  const [formData, setFormData] = useState({
+
+  const [form, setForm] = useState({
+    id: "",
+    batchID: "",
+    startDate: "",
+    duration: "",
+    temperature: "",
+    light: "",
+    humidity: "",
     chamber: "",
-    status: "",
+    observations: "",
+    status: "pending" as StatusType,
   });
 
-  const formRefs = {
-    id: useRef<HTMLInputElement>(null),
-    batchID: useRef<HTMLInputElement>(null),
-    startDate: useRef<HTMLInputElement>(null),
-    duration: useRef<HTMLInputElement>(null),
-    temperature: useRef<HTMLInputElement>(null),
-    light: useRef<HTMLInputElement>(null),
-    humidity: useRef<HTMLInputElement>(null),
-    chamber: useRef<HTMLSelectElement>(null),
-    observations: useRef<HTMLInputElement>(null),
-    status: useRef<HTMLSelectElement>(null),
-  };
+  const [editingRecord, setEditingRecord] = useState<IncubationRecord | null>(null);
 
   const stats = [
     { title: "Total Incubating", value: records.length.toString(), icon: Flame, trend: { value: "+15 new entries", isPositive: true } },
@@ -62,71 +58,123 @@ export function Incubation() {
     });
   }, [records, searchTerm, filterValue]);
 
-  const handleAdd = useCallback(() => {
+  const handleAdd = () => {
     const newRecord: IncubationRecord = {
-      id: formRefs.id.current?.value || `INC-2024-${String(records.length + 1).padStart(3, '0')}`,
-      batchID: formRefs.batchID.current?.value || "",
-      startDate: formRefs.startDate.current?.value || new Date().toISOString().split('T')[0],
-      duration: formRefs.duration.current?.value || "14 days",
-      temperature: formRefs.temperature.current?.value || "25°C",
-      light: formRefs.light.current?.value || "16h light/8h dark",
-      humidity: formRefs.humidity.current?.value || "70%",
-      chamber: formData.chamber || "Chamber 1",
-      observations: formRefs.observations.current?.value || "",
-      status: (formData.status || "pending") as StatusType,
+      id: form.id,
+      batchID: form.batchID,
+      startDate: form.startDate,
+      duration: form.duration,
+      temperature: form.temperature,
+      light: form.light,
+      humidity: form.humidity,
+      chamber: form.chamber,
+      observations: form.observations,
+      status: form.status,
     };
-
-    if (editingId && editingRecord) {
-      dispatch(updateRecord({ ...newRecord, id: editingRecord.id }));
-      dispatch(setEditingId(null));
-      setEditingRecord(null);
-    } else {
-      dispatch(addRecord(newRecord));
-    }
-
-    setIsAddModalOpen(false);
-    Object.values(formRefs).forEach((ref) => {
-      if (ref.current && 'value' in ref.current) ref.current.value = "";
+    dispatch(addRecord(newRecord));
+    setForm({
+      id: "",
+      batchID: "",
+      startDate: "",
+      duration: "",
+      temperature: "",
+      light: "",
+      humidity: "",
+      chamber: "",
+      observations: "",
+      status: "pending",
     });
-    setFormData({ chamber: "", status: "" });
-  }, [dispatch, editingId, editingRecord, records.length, formData]);
+    setIsAddModalOpen(false);
+  };
 
   const handleEdit = useCallback((record: IncubationRecord) => {
     setEditingRecord(record);
-    dispatch(setEditingId(record.id));
-    setFormData({
+    setForm({
+      id: record.id,
+      batchID: record.batchID,
+      startDate: record.startDate,
+      duration: record.duration,
+      temperature: record.temperature,
+      light: record.light,
+      humidity: record.humidity,
       chamber: record.chamber,
+      observations: record.observations,
       status: record.status,
     });
+    setIsEditModalOpen(true);
+  }, []);
 
-    setTimeout(() => {
-      if (formRefs.id.current) formRefs.id.current.value = record.id;
-      if (formRefs.batchID.current) formRefs.batchID.current.value = record.batchID;
-      if (formRefs.startDate.current) formRefs.startDate.current.value = record.startDate;
-      if (formRefs.duration.current) formRefs.duration.current.value = record.duration;
-      if (formRefs.temperature.current) formRefs.temperature.current.value = record.temperature;
-      if (formRefs.light.current) formRefs.light.current.value = record.light;
-      if (formRefs.humidity.current) formRefs.humidity.current.value = record.humidity;
-      if (formRefs.chamber.current) formRefs.chamber.current.value = record.chamber;
-      if (formRefs.observations.current) formRefs.observations.current.value = record.observations;
-      if (formRefs.status.current) formRefs.status.current.value = record.status;
-    }, 0);
+  const handleSaveEdit = () => {
+    if (editingRecord) {
+      const updatedRecord: IncubationRecord = {
+        id: form.id,
+        batchID: form.batchID,
+        startDate: form.startDate,
+        duration: form.duration,
+        temperature: form.temperature,
+        light: form.light,
+        humidity: form.humidity,
+        chamber: form.chamber,
+        observations: form.observations,
+        status: form.status,
+      };
+      dispatch(updateRecord(updatedRecord));
+      setForm({
+        id: "",
+        batchID: "",
+        startDate: "",
+        duration: "",
+        temperature: "",
+        light: "",
+        humidity: "",
+        chamber: "",
+        observations: "",
+        status: "pending",
+      });
+      setEditingRecord(null);
+      setIsEditModalOpen(false);
+    }
+  };
 
-    setIsAddModalOpen(true);
-  }, [dispatch]);
+  const handleDeleteFromEdit = () => {
+    if (editingRecord) {
+      dispatch(deleteRecord(editingRecord.id));
+      setForm({
+        id: "",
+        batchID: "",
+        startDate: "",
+        duration: "",
+        temperature: "",
+        light: "",
+        humidity: "",
+        chamber: "",
+        observations: "",
+        status: "pending",
+      });
+      setEditingRecord(null);
+      setIsEditModalOpen(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setForm({
+      id: "",
+      batchID: "",
+      startDate: "",
+      duration: "",
+      temperature: "",
+      light: "",
+      humidity: "",
+      chamber: "",
+      observations: "",
+      status: "pending",
+    });
+    setEditingRecord(null);
+    setIsEditModalOpen(false);
+  };
 
   const handleDelete = useCallback((id: string) => {
     dispatch(deleteRecord(id));
-  }, [dispatch]);
-
-  const handleCloseModal = useCallback(() => {
-    setIsAddModalOpen(false);
-    dispatch(setEditingId(null));
-    setEditingRecord(null);
-    Object.values(formRefs).forEach((ref) => {
-      if (ref.current) ref.current.value = "";
-    });
-    setFormData({ chamber: "", status: "" });
   }, [dispatch]);
 
   return (
@@ -145,89 +193,6 @@ export function Incubation() {
             <Download className="w-4 h-4" />
             Export
           </Button>
-          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2 bg-[#4CAF50] hover:bg-[#45a049]">
-                <Plus className="w-4 h-4" />
-                Add Incubation Record
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>{editingId ? "Edit Incubation Record" : "Add Incubation Record"}</DialogTitle>
-              </DialogHeader>
-              <div className="grid grid-cols-2 gap-4 py-4">
-                <div className="space-y-2">
-                  <Label>Incubation ID</Label>
-                  <Input ref={formRefs.id} placeholder="INC-2024-XXX" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Batch ID</Label>
-                  <Input ref={formRefs.batchID} placeholder="SC-2024-XXX" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Start Date</Label>
-                  <Input ref={formRefs.startDate} type="date" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Duration</Label>
-                  <Input ref={formRefs.duration} placeholder="14 days" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Temperature</Label>
-                  <Input ref={formRefs.temperature} placeholder="25°C" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Light Cycle</Label>
-                  <Input ref={formRefs.light} placeholder="16h/day" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Humidity</Label>
-                  <Input ref={formRefs.humidity} placeholder="60%" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Incubation Chamber</Label>
-                  <Select value={formData.chamber} onValueChange={(v) => { setFormData(prev => ({ ...prev, chamber: v })); if (formRefs.chamber.current) formRefs.chamber.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.chamber as any} className="bg-white">
-                      <SelectValue placeholder="Select chamber" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="IC-01">IC-01</SelectItem>
-                      <SelectItem value="IC-02">IC-02</SelectItem>
-                      <SelectItem value="IC-03">IC-03</SelectItem>
-                      <SelectItem value="IC-04">IC-04</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2 col-span-2">
-                  <Label>Observations</Label>
-                  <Input ref={formRefs.observations} placeholder="Enter observations" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <Select value={formData.status} onValueChange={(v) => { setFormData(prev => ({ ...prev, status: v })); if (formRefs.status.current) formRefs.status.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.status as any} className="bg-white">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="contaminated">Contaminated</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={handleCloseModal}>
-                  Cancel
-                </Button>
-                <Button className="bg-[#4CAF50] hover:bg-[#45a049]" onClick={handleAdd}>
-                  {editingId ? "Update" : "Save"} Record
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
         </div>
       </div>
 
@@ -241,7 +206,7 @@ export function Incubation() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex gap-4 items-center">
             <Input
-              placeholder="Search incubation..."
+              placeholder="Search incubation records..."
               className="max-w-xs"
               value={searchTerm}
               onChange={(e) => dispatch(setSearchTerm(e.target.value))}
@@ -259,18 +224,99 @@ export function Incubation() {
               </SelectContent>
             </Select>
           </div>
-          <h3>Incubation Register</h3>
+          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2 bg-[#4CAF50] hover:bg-[#45a049]">
+                <Plus className="w-4 h-4" />
+                Add Incubation Record
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Add Incubation Record</DialogTitle>
+              </DialogHeader>
+              <div className="grid grid-cols-2 gap-4 py-4">
+                <div className="space-y-2">
+                  <Label>Incubation ID</Label>
+                  <Input placeholder="INC-2024-XXX" value={form.id} onChange={(e) => setForm({...form, id: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Batch ID</Label>
+                  <Input placeholder="SC-2024-XXX" value={form.batchID} onChange={(e) => setForm({...form, batchID: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Start Date</Label>
+                  <Input type="date" value={form.startDate} onChange={(e) => setForm({...form, startDate: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Duration</Label>
+                  <Input placeholder="14 days" value={form.duration} onChange={(e) => setForm({...form, duration: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Temperature</Label>
+                  <Input placeholder="25°C" value={form.temperature} onChange={(e) => setForm({...form, temperature: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Light</Label>
+                  <Input placeholder="16h light/8h dark" value={form.light} onChange={(e) => setForm({...form, light: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Humidity</Label>
+                  <Input placeholder="70%" value={form.humidity} onChange={(e) => setForm({...form, humidity: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Chamber</Label>
+                  <Select value={form.chamber} onValueChange={(v) => setForm({...form, chamber: v})}>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select chamber" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="Chamber 1">Chamber 1</SelectItem>
+                      <SelectItem value="Chamber 2">Chamber 2</SelectItem>
+                      <SelectItem value="Chamber 3">Chamber 3</SelectItem>
+                      <SelectItem value="Chamber 4">Chamber 4</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2 col-span-2">
+                  <Label>Observations</Label>
+                  <Input placeholder="Enter observations" value={form.observations} onChange={(e) => setForm({...form, observations: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select value={form.status} onValueChange={(v: any) => setForm({...form, status: v})}>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="contaminated">Contaminated</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button className="bg-[#4CAF50] hover:bg-[#45a049]" onClick={handleAdd}>
+                  Save Record
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
-        <div className="border rounded-lg overflow-hidden">
+        <div className="border rounded-lg overflow-hidden mt-4">
           <Table>
             <TableHeader>
               <TableRow className="bg-[#F5F5F5]">
                 <TableHead className="font-bold text-[#333333]">ID</TableHead>
-                <TableHead className="font-bold text-[#333333]">Batch</TableHead>
-                <TableHead className="font-bold text-[#333333]">Temperature</TableHead>
-                <TableHead className="font-bold text-[#333333]">Humidity</TableHead>
+                <TableHead className="font-bold text-[#333333]">Batch ID</TableHead>
+                <TableHead className="font-bold text-[#333333]">Start Date</TableHead>
+                <TableHead className="font-bold text-[#333333]">Duration</TableHead>
                 <TableHead className="font-bold text-[#333333]">Chamber</TableHead>
-                <TableHead className="font-bold text-[#333333]">Observations</TableHead>
                 <TableHead className="font-bold text-[#333333]">Status</TableHead>
                 <TableHead className="font-bold text-[#333333]">Actions</TableHead>
               </TableRow>
@@ -280,10 +326,9 @@ export function Incubation() {
                 <TableRow key={record.id} className="hover:bg-[#F3FFF4] transition-colors">
                   <TableCell>{record.id}</TableCell>
                   <TableCell>{record.batchID}</TableCell>
-                  <TableCell>{record.temperature}</TableCell>
-                  <TableCell>{record.humidity}</TableCell>
+                  <TableCell>{record.startDate}</TableCell>
+                  <TableCell>{record.duration}</TableCell>
                   <TableCell>{record.chamber}</TableCell>
-                  <TableCell>{record.observations}</TableCell>
                   <TableCell>
                     <StatusBadge status={record.status} />
                   </TableCell>
@@ -301,6 +346,89 @@ export function Incubation() {
           </Table>
         </div>
       </Card>
+
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Incubation Record</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4 py-4">
+            <div className="space-y-2">
+              <Label>Incubation ID</Label>
+              <Input placeholder="INC-2024-XXX" value={form.id} onChange={(e) => setForm({...form, id: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Batch ID</Label>
+              <Input placeholder="SC-2024-XXX" value={form.batchID} onChange={(e) => setForm({...form, batchID: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Start Date</Label>
+              <Input type="date" value={form.startDate} onChange={(e) => setForm({...form, startDate: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Duration</Label>
+              <Input placeholder="14 days" value={form.duration} onChange={(e) => setForm({...form, duration: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Temperature</Label>
+              <Input placeholder="25°C" value={form.temperature} onChange={(e) => setForm({...form, temperature: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Light</Label>
+              <Input placeholder="16h light/8h dark" value={form.light} onChange={(e) => setForm({...form, light: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Humidity</Label>
+              <Input placeholder="70%" value={form.humidity} onChange={(e) => setForm({...form, humidity: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Chamber</Label>
+              <Select value={form.chamber} onValueChange={(v) => setForm({...form, chamber: v})}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Select chamber" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="Chamber 1">Chamber 1</SelectItem>
+                  <SelectItem value="Chamber 2">Chamber 2</SelectItem>
+                  <SelectItem value="Chamber 3">Chamber 3</SelectItem>
+                  <SelectItem value="Chamber 4">Chamber 4</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2 col-span-2">
+              <Label>Observations</Label>
+              <Input placeholder="Enter observations" value={form.observations} onChange={(e) => setForm({...form, observations: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select value={form.status} onValueChange={(v: any) => setForm({...form, status: v})}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="contaminated">Contaminated</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-between">
+            <Button variant="destructive" onClick={handleDeleteFromEdit}>
+              Delete Entry
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleCancelEdit}>
+                Cancel
+              </Button>
+              <Button className="bg-[#4CAF50] hover:bg-[#45a049]" onClick={handleSaveEdit}>
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

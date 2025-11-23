@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Plus, Filter, Download, Trash2, Edit2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
@@ -9,52 +9,46 @@ import { Label } from "../../components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 import { StatusBadge, StatusType } from "../../components/common/StatusBadge";
 import { StatsCard } from "../../components/common/StatsCard";
-import { TreePine, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { Sprout, TrendingUp, Users, Award } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../../hooks";
 import {
   addRecord,
   updateRecord,
   deleteRecord,
   setSearchTerm,
-  setFilterStatus,
-  setEditingId,
   type SecondaryHardeningRecord,
 } from "../../store/slices/secondaryHardeningSlice";
 
 export function SecondaryHardening() {
   const dispatch = useAppDispatch();
-  const { records, searchTerm, filterStatus, editingId } = useAppSelector((state) => state.secondaryHardening);
+  const { records, searchTerm } = useAppSelector((state) => state.secondaryHardening);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [filterValue, setFilterValue] = useState<StatusType | "all">("all");
-  const [editingRecord, setEditingRecord] = useState<SecondaryHardeningRecord | null>(null);
-  const [formData, setFormData] = useState({
+
+  const [form, setForm] = useState({
+    id: "",
+    date: "",
+    batchName: "",
     crop: "",
     tunnel: "",
     bed: "",
-    status: "",
+    row: "",
+    cavity: "",
+    plants: "",
+    workers: "",
+    waitingPeriod: "",
+    survivability: "",
+    status: "pending" as StatusType,
   });
 
-  const formRefs = {
-    id: useRef<HTMLInputElement>(null),
-    date: useRef<HTMLInputElement>(null),
-    batchName: useRef<HTMLInputElement>(null),
-    crop: useRef<HTMLSelectElement>(null),
-    tunnel: useRef<HTMLSelectElement>(null),
-    bed: useRef<HTMLSelectElement>(null),
-    row: useRef<HTMLInputElement>(null),
-    cavity: useRef<HTMLInputElement>(null),
-    plants: useRef<HTMLInputElement>(null),
-    workers: useRef<HTMLInputElement>(null),
-    waitingPeriod: useRef<HTMLInputElement>(null),
-    survivability: useRef<HTMLInputElement>(null),
-    status: useRef<HTMLSelectElement>(null),
-  };
+  const [editingRecord, setEditingRecord] = useState<SecondaryHardeningRecord | null>(null);
 
   const stats = [
-    { title: "Active Batches", value: records.length.toString(), icon: TreePine, trend: { value: "+4 this week", isPositive: true } },
-    { title: "Ready for Dispatch", value: records.filter((r) => r.status === "completed").length.toString(), icon: CheckCircle },
-    { title: "In Progress", value: records.filter((r) => r.status === "active").length.toString(), icon: Clock },
-    { title: "Monitoring Required", value: records.filter((r) => r.status === "pending").length.toString(), icon: AlertCircle },
+    { title: "Total Plants", value: records.reduce((sum, r) => sum + r.plants, 0).toString(), icon: Sprout, trend: { value: "+12% this week", isPositive: true } },
+    { title: "Active Batches", value: records.filter((r) => r.status === "active").length.toString(), icon: TrendingUp },
+    { title: "Total Workers", value: records.reduce((sum, r) => sum + r.workers, 0).toString(), icon: Users },
+    { title: "Avg Survivability", value: `${Math.round(records.reduce((sum, r) => sum + parseFloat(r.survivability), 0) / records.length) || 0}%`, icon: Award },
   ];
 
   const filteredRecords = useMemo(() => {
@@ -67,79 +61,144 @@ export function SecondaryHardening() {
     });
   }, [records, searchTerm, filterValue]);
 
-  const handleAdd = useCallback(() => {
+  const handleAdd = () => {
     const newRecord: SecondaryHardeningRecord = {
-      id: formRefs.id.current?.value || `SH-2024-${String(records.length + 1).padStart(3, '0')}`,
-      date: formRefs.date.current?.value || new Date().toISOString().split('T')[0],
-      batchName: formRefs.batchName.current?.value || "",
-      crop: formData.crop || "Banana",
-      tunnel: formData.tunnel || "Tunnel 1",
-      bed: formData.bed || "Bed 1",
-      row: formRefs.row.current?.value || "1",
-      cavity: formRefs.cavity.current?.value || "50",
-      plants: parseInt(formRefs.plants.current?.value || "0") || 0,
-      workers: parseInt(formRefs.workers.current?.value || "0") || 0,
-      waitingPeriod: formRefs.waitingPeriod.current?.value || "7 days",
-      survivability: formRefs.survivability.current?.value || "95%",
-      status: (formData.status || "pending") as StatusType,
+      id: form.id,
+      date: form.date,
+      batchName: form.batchName,
+      crop: form.crop,
+      tunnel: form.tunnel,
+      bed: form.bed,
+      row: form.row,
+      cavity: form.cavity,
+      plants: parseInt(form.plants) || 0,
+      workers: parseInt(form.workers) || 0,
+      waitingPeriod: form.waitingPeriod,
+      survivability: form.survivability,
+      status: form.status,
     };
-
-    if (editingId && editingRecord) {
-      dispatch(updateRecord({ ...newRecord, id: editingRecord.id }));
-      dispatch(setEditingId(null));
-      setEditingRecord(null);
-    } else {
-      dispatch(addRecord(newRecord));
-    }
-
-    setIsAddModalOpen(false);
-    Object.values(formRefs).forEach((ref) => {
-      if (ref.current && 'value' in ref.current) ref.current.value = "";
+    dispatch(addRecord(newRecord));
+    setForm({
+      id: "",
+      date: "",
+      batchName: "",
+      crop: "",
+      tunnel: "",
+      bed: "",
+      row: "",
+      cavity: "",
+      plants: "",
+      workers: "",
+      waitingPeriod: "",
+      survivability: "",
+      status: "pending",
     });
-    setFormData({ crop: "", tunnel: "", bed: "", status: "" });
-  }, [dispatch, editingId, editingRecord, records.length, formData]);
+    setIsAddModalOpen(false);
+  };
 
   const handleEdit = useCallback((record: SecondaryHardeningRecord) => {
     setEditingRecord(record);
-    dispatch(setEditingId(record.id));
-    setFormData({
+    setForm({
+      id: record.id,
+      date: record.date,
+      batchName: record.batchName,
       crop: record.crop,
       tunnel: record.tunnel,
       bed: record.bed,
+      row: record.row,
+      cavity: record.cavity,
+      plants: record.plants.toString(),
+      workers: record.workers.toString(),
+      waitingPeriod: record.waitingPeriod,
+      survivability: record.survivability,
       status: record.status,
     });
+    setIsEditModalOpen(true);
+  }, []);
 
-    setTimeout(() => {
-      if (formRefs.id.current) formRefs.id.current.value = record.id;
-      if (formRefs.date.current) formRefs.date.current.value = record.date;
-      if (formRefs.batchName.current) formRefs.batchName.current.value = record.batchName;
-      if (formRefs.crop.current) formRefs.crop.current.value = record.crop;
-      if (formRefs.tunnel.current) formRefs.tunnel.current.value = record.tunnel;
-      if (formRefs.bed.current) formRefs.bed.current.value = record.bed;
-      if (formRefs.row.current) formRefs.row.current.value = record.row;
-      if (formRefs.cavity.current) formRefs.cavity.current.value = record.cavity;
-      if (formRefs.plants.current) formRefs.plants.current.value = record.plants.toString();
-      if (formRefs.workers.current) formRefs.workers.current.value = record.workers.toString();
-      if (formRefs.waitingPeriod.current) formRefs.waitingPeriod.current.value = record.waitingPeriod;
-      if (formRefs.survivability.current) formRefs.survivability.current.value = record.survivability;
-      if (formRefs.status.current) formRefs.status.current.value = record.status;
-    }, 0);
+  const handleSaveEdit = () => {
+    if (editingRecord) {
+      const updatedRecord: SecondaryHardeningRecord = {
+        id: form.id,
+        date: form.date,
+        batchName: form.batchName,
+        crop: form.crop,
+        tunnel: form.tunnel,
+        bed: form.bed,
+        row: form.row,
+        cavity: form.cavity,
+        plants: parseInt(form.plants) || 0,
+        workers: parseInt(form.workers) || 0,
+        waitingPeriod: form.waitingPeriod,
+        survivability: form.survivability,
+        status: form.status,
+      };
+      dispatch(updateRecord(updatedRecord));
+      setForm({
+        id: "",
+        date: "",
+        batchName: "",
+        crop: "",
+        tunnel: "",
+        bed: "",
+        row: "",
+        cavity: "",
+        plants: "",
+        workers: "",
+        waitingPeriod: "",
+        survivability: "",
+        status: "pending",
+      });
+      setEditingRecord(null);
+      setIsEditModalOpen(false);
+    }
+  };
 
-    setIsAddModalOpen(true);
-  }, [dispatch]);
+  const handleDeleteFromEdit = () => {
+    if (editingRecord) {
+      dispatch(deleteRecord(editingRecord.id));
+      setForm({
+        id: "",
+        date: "",
+        batchName: "",
+        crop: "",
+        tunnel: "",
+        bed: "",
+        row: "",
+        cavity: "",
+        plants: "",
+        workers: "",
+        waitingPeriod: "",
+        survivability: "",
+        status: "pending",
+      });
+      setEditingRecord(null);
+      setIsEditModalOpen(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setForm({
+      id: "",
+      date: "",
+      batchName: "",
+      crop: "",
+      tunnel: "",
+      bed: "",
+      row: "",
+      cavity: "",
+      plants: "",
+      workers: "",
+      waitingPeriod: "",
+      survivability: "",
+      status: "pending",
+    });
+    setEditingRecord(null);
+    setIsEditModalOpen(false);
+  };
 
   const handleDelete = useCallback((id: string) => {
     dispatch(deleteRecord(id));
-  }, [dispatch]);
-
-  const handleCloseModal = useCallback(() => {
-    setIsAddModalOpen(false);
-    dispatch(setEditingId(null));
-    setEditingRecord(null);
-    Object.values(formRefs).forEach((ref) => {
-      if (ref.current) ref.current.value = "";
-    });
-    setFormData({ crop: "", tunnel: "", bed: "", status: "" });
   }, [dispatch]);
 
   return (
@@ -147,7 +206,7 @@ export function SecondaryHardening() {
       <div className="flex items-center justify-between">
         <div>
           <h1>Secondary Hardening</h1>
-          <p className="text-[#717182] mt-1">Final acclimatization before dispatch to field</p>
+          <p className="text-[#717182] mt-1">Track plants in outdoor acclimatization tunnels</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" className="gap-2">
@@ -158,115 +217,6 @@ export function SecondaryHardening() {
             <Download className="w-4 h-4" />
             Export
           </Button>
-          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2 bg-[#4CAF50] hover:bg-[#45a049]">
-                <Plus className="w-4 h-4" />
-                Add Secondary Hardening
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>{editingId ? "Edit Record" : "Add Secondary Hardening Record"}</DialogTitle>
-              </DialogHeader>
-              <div className="grid grid-cols-2 gap-4 py-4 max-h-96 overflow-y-auto">
-                <div className="space-y-2">
-                  <Label>Date</Label>
-                  <Input ref={formRefs.date} type="date" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Batch Name</Label>
-                  <Input ref={formRefs.batchName} placeholder="e.g., Banana-GN-Oct" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Crop Type</Label>
-                  <Select value={formData.crop} onValueChange={(v) => { setFormData(prev => ({ ...prev, crop: v })); if (formRefs.crop.current) formRefs.crop.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.crop as any} className="bg-white">
-                      <SelectValue placeholder="Select crop" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="Banana">Banana</SelectItem>
-                      <SelectItem value="Bamboo">Bamboo</SelectItem>
-                      <SelectItem value="Teak">Teak</SelectItem>
-                      <SelectItem value="Ornamental">Ornamental</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Tunnel</Label>
-                  <Select value={formData.tunnel} onValueChange={(v) => { setFormData(prev => ({ ...prev, tunnel: v })); if (formRefs.tunnel.current) formRefs.tunnel.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.tunnel as any} className="bg-white">
-                      <SelectValue placeholder="Select tunnel" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="SH-T1">SH-T1</SelectItem>
-                      <SelectItem value="SH-T2">SH-T2</SelectItem>
-                      <SelectItem value="SH-T3">SH-T3</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Bed</Label>
-                  <Select value={formData.bed} onValueChange={(v) => { setFormData(prev => ({ ...prev, bed: v })); if (formRefs.bed.current) formRefs.bed.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.bed as any} className="bg-white">
-                      <SelectValue placeholder="Select bed" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="SB1">SB1</SelectItem>
-                      <SelectItem value="SB2">SB2</SelectItem>
-                      <SelectItem value="SB3">SB3</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Row</Label>
-                  <Input ref={formRefs.row} placeholder="e.g., SR1-SR4" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Cavity Size</Label>
-                  <Input ref={formRefs.cavity} type="number" placeholder="72" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Number of Plants</Label>
-                  <Input ref={formRefs.plants} type="number" placeholder="2000" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Workers</Label>
-                  <Input ref={formRefs.workers} type="number" placeholder="3" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Waiting Period</Label>
-                  <Input ref={formRefs.waitingPeriod} placeholder="21 days" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Survivability %</Label>
-                  <Input ref={formRefs.survivability} placeholder="96%" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <Select value={formData.status} onValueChange={(v) => { setFormData(prev => ({ ...prev, status: v })); if (formRefs.status.current) formRefs.status.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.status as any} className="bg-white">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="contaminated">Contaminated</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={handleCloseModal}>
-                  Cancel
-                </Button>
-                <Button className="bg-[#4CAF50] hover:bg-[#45a049]" onClick={handleAdd}>
-                  {editingId ? "Update" : "Save"} Record
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
         </div>
       </div>
 
@@ -280,7 +230,7 @@ export function SecondaryHardening() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex gap-4 items-center">
             <Input
-              placeholder="Search secondary hardening..."
+              placeholder="Search hardening records..."
               className="max-w-xs"
               value={searchTerm}
               onChange={(e) => dispatch(setSearchTerm(e.target.value))}
@@ -298,18 +248,130 @@ export function SecondaryHardening() {
               </SelectContent>
             </Select>
           </div>
-          <h3>Secondary Hardening Register</h3>
+          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2 bg-[#4CAF50] hover:bg-[#45a049]">
+                <Plus className="w-4 h-4" />
+                Add Hardening Record
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Add Secondary Hardening Record</DialogTitle>
+              </DialogHeader>
+              <div className="grid grid-cols-2 gap-4 py-4">
+                <div className="space-y-2">
+                  <Label>Record ID</Label>
+                  <Input placeholder="SH-2024-XXX" value={form.id} onChange={(e) => setForm({...form, id: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Date</Label>
+                  <Input type="date" value={form.date} onChange={(e) => setForm({...form, date: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Batch Name</Label>
+                  <Input placeholder="Enter batch name" value={form.batchName} onChange={(e) => setForm({...form, batchName: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Crop</Label>
+                  <Select value={form.crop} onValueChange={(v) => setForm({...form, crop: v})}>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select crop" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="Banana">Banana</SelectItem>
+                      <SelectItem value="Bamboo">Bamboo</SelectItem>
+                      <SelectItem value="Teak">Teak</SelectItem>
+                      <SelectItem value="Ornamental">Ornamental</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Tunnel</Label>
+                  <Select value={form.tunnel} onValueChange={(v) => setForm({...form, tunnel: v})}>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select tunnel" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="Tunnel 1">Tunnel 1</SelectItem>
+                      <SelectItem value="Tunnel 2">Tunnel 2</SelectItem>
+                      <SelectItem value="Tunnel 3">Tunnel 3</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Bed</Label>
+                  <Select value={form.bed} onValueChange={(v) => setForm({...form, bed: v})}>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select bed" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="Bed 1">Bed 1</SelectItem>
+                      <SelectItem value="Bed 2">Bed 2</SelectItem>
+                      <SelectItem value="Bed 3">Bed 3</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Row</Label>
+                  <Input placeholder="1" value={form.row} onChange={(e) => setForm({...form, row: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Cavity</Label>
+                  <Input placeholder="50" value={form.cavity} onChange={(e) => setForm({...form, cavity: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Number of Plants</Label>
+                  <Input type="number" placeholder="100" value={form.plants} onChange={(e) => setForm({...form, plants: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Workers</Label>
+                  <Input type="number" placeholder="5" value={form.workers} onChange={(e) => setForm({...form, workers: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Waiting Period</Label>
+                  <Input placeholder="7 days" value={form.waitingPeriod} onChange={(e) => setForm({...form, waitingPeriod: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Survivability (%)</Label>
+                  <Input placeholder="95%" value={form.survivability} onChange={(e) => setForm({...form, survivability: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select value={form.status} onValueChange={(v: any) => setForm({...form, status: v})}>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="contaminated">Contaminated</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button className="bg-[#4CAF50] hover:bg-[#45a049]" onClick={handleAdd}>
+                  Save Record
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
-        <div className="border rounded-lg overflow-hidden">
+        <div className="border rounded-lg overflow-hidden mt-4">
           <Table>
             <TableHeader>
               <TableRow className="bg-[#F5F5F5]">
                 <TableHead className="font-bold text-[#333333]">ID</TableHead>
-                <TableHead className="font-bold text-[#333333]">Batch Name</TableHead>
+                <TableHead className="font-bold text-[#333333]">Date</TableHead>
+                <TableHead className="font-bold text-[#333333]">Batch</TableHead>
                 <TableHead className="font-bold text-[#333333]">Crop</TableHead>
-                <TableHead className="font-bold text-[#333333]">Tunnel</TableHead>
+                <TableHead className="font-bold text-[#333333]">Tunnel/Bed</TableHead>
                 <TableHead className="font-bold text-[#333333]">Plants</TableHead>
-                <TableHead className="font-bold text-[#333333]">Survival %</TableHead>
                 <TableHead className="font-bold text-[#333333]">Status</TableHead>
                 <TableHead className="font-bold text-[#333333]">Actions</TableHead>
               </TableRow>
@@ -318,11 +380,11 @@ export function SecondaryHardening() {
               {filteredRecords.map((record) => (
                 <TableRow key={record.id} className="hover:bg-[#F3FFF4] transition-colors">
                   <TableCell>{record.id}</TableCell>
+                  <TableCell>{record.date}</TableCell>
                   <TableCell>{record.batchName}</TableCell>
                   <TableCell>{record.crop}</TableCell>
-                  <TableCell>{record.tunnel}</TableCell>
+                  <TableCell>{record.tunnel}/{record.bed}</TableCell>
                   <TableCell>{record.plants}</TableCell>
-                  <TableCell>{record.survivability}</TableCell>
                   <TableCell>
                     <StatusBadge status={record.status} />
                   </TableCell>
@@ -340,6 +402,119 @@ export function SecondaryHardening() {
           </Table>
         </div>
       </Card>
+
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Secondary Hardening Record</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4 py-4">
+            <div className="space-y-2">
+              <Label>Record ID</Label>
+              <Input placeholder="SH-2024-XXX" value={form.id} onChange={(e) => setForm({...form, id: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Date</Label>
+              <Input type="date" value={form.date} onChange={(e) => setForm({...form, date: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Batch Name</Label>
+              <Input placeholder="Enter batch name" value={form.batchName} onChange={(e) => setForm({...form, batchName: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Crop</Label>
+              <Select value={form.crop} onValueChange={(v) => setForm({...form, crop: v})}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Select crop" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="Banana">Banana</SelectItem>
+                  <SelectItem value="Bamboo">Bamboo</SelectItem>
+                  <SelectItem value="Teak">Teak</SelectItem>
+                  <SelectItem value="Ornamental">Ornamental</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Tunnel</Label>
+              <Select value={form.tunnel} onValueChange={(v) => setForm({...form, tunnel: v})}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Select tunnel" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="Tunnel 1">Tunnel 1</SelectItem>
+                  <SelectItem value="Tunnel 2">Tunnel 2</SelectItem>
+                  <SelectItem value="Tunnel 3">Tunnel 3</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Bed</Label>
+              <Select value={form.bed} onValueChange={(v) => setForm({...form, bed: v})}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Select bed" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="Bed 1">Bed 1</SelectItem>
+                  <SelectItem value="Bed 2">Bed 2</SelectItem>
+                  <SelectItem value="Bed 3">Bed 3</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Row</Label>
+              <Input placeholder="1" value={form.row} onChange={(e) => setForm({...form, row: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Cavity</Label>
+              <Input placeholder="50" value={form.cavity} onChange={(e) => setForm({...form, cavity: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Number of Plants</Label>
+              <Input type="number" placeholder="100" value={form.plants} onChange={(e) => setForm({...form, plants: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Workers</Label>
+              <Input type="number" placeholder="5" value={form.workers} onChange={(e) => setForm({...form, workers: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Waiting Period</Label>
+              <Input placeholder="7 days" value={form.waitingPeriod} onChange={(e) => setForm({...form, waitingPeriod: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Survivability (%)</Label>
+              <Input placeholder="95%" value={form.survivability} onChange={(e) => setForm({...form, survivability: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select value={form.status} onValueChange={(v: any) => setForm({...form, status: v})}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="contaminated">Contaminated</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-between">
+            <Button variant="destructive" onClick={handleDeleteFromEdit}>
+              Delete Entry
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleCancelEdit}>
+                Cancel
+              </Button>
+              <Button className="bg-[#4CAF50] hover:bg-[#45a049]" onClick={handleSaveEdit}>
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Plus, Filter, Download, Trash2, Edit2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
@@ -17,47 +17,39 @@ import {
   updateRecord,
   deleteRecord,
   setSearchTerm,
-  setFilterStatus,
-  setEditingId,
   type OutdoorSamplingRecord,
 } from "../../store/slices/outdoorSamplingSlice";
 
 export function OutdoorSampling() {
   const dispatch = useAppDispatch();
-  const { records, searchTerm, filterStatus, editingId } = useAppSelector((state) => state.outdoorSampling);
+  const { records, searchTerm } = useAppSelector((state) => state.outdoorSampling);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [filterValue, setFilterValue] = useState<StatusType | "all">("all");
-  const [editingRecord, setEditingRecord] = useState<OutdoorSamplingRecord | null>(null);
-  const [formData, setFormData] = useState({
+
+  const [form, setForm] = useState({
+    id: "",
+    date: "",
+    batchID: "",
     stage: "",
     crop: "",
     sampleType: "",
     testType: "",
+    result: "",
+    testedBy: "",
+    remarks: "",
     govVerified: "",
-    status: "",
+    certNumber: "",
+    status: "pending" as StatusType,
   });
 
-  const formRefs = {
-    id: useRef<HTMLInputElement>(null),
-    date: useRef<HTMLInputElement>(null),
-    batchID: useRef<HTMLInputElement>(null),
-    stage: useRef<HTMLSelectElement>(null),
-    crop: useRef<HTMLSelectElement>(null),
-    sampleType: useRef<HTMLSelectElement>(null),
-    testType: useRef<HTMLSelectElement>(null),
-    result: useRef<HTMLInputElement>(null),
-    testedBy: useRef<HTMLInputElement>(null),
-    remarks: useRef<HTMLTextAreaElement>(null),
-    govVerified: useRef<HTMLSelectElement>(null),
-    certNumber: useRef<HTMLInputElement>(null),
-    status: useRef<HTMLSelectElement>(null),
-  };
+  const [editingRecord, setEditingRecord] = useState<OutdoorSamplingRecord | null>(null);
 
   const stats = [
-    { title: "Total Samples", value: records.length.toString(), icon: TestTube },
-    { title: "Passed Tests", value: records.filter((r) => r.status === "completed").length.toString(), icon: CheckCircle },
-    { title: "Pending Analysis", value: records.filter((r) => r.status === "pending").length.toString(), icon: Clock },
-    { title: "Failed Tests", value: records.filter((r) => r.status === "contaminated").length.toString(), icon: XCircle },
+    { title: "Total Tests", value: records.length.toString(), icon: TestTube, trend: { value: "+18 this week", isPositive: true } },
+    { title: "Passed Tests", value: records.filter((r) => r.result === "Pass").length.toString(), icon: CheckCircle },
+    { title: "Pending Tests", value: records.filter((r) => r.status === "pending").length.toString(), icon: Clock },
+    { title: "Failed Tests", value: records.filter((r) => r.result === "Fail").length.toString(), icon: XCircle },
   ];
 
   const filteredRecords = useMemo(() => {
@@ -70,81 +62,144 @@ export function OutdoorSampling() {
     });
   }, [records, searchTerm, filterValue]);
 
-  const handleAdd = useCallback(() => {
+  const handleAdd = () => {
     const newRecord: OutdoorSamplingRecord = {
-      id: formRefs.id.current?.value || `OS-2024-${String(records.length + 1).padStart(3, '0')}`,
-      date: formRefs.date.current?.value || new Date().toISOString().split('T')[0],
-      batchID: formRefs.batchID.current?.value || "",
-      stage: formData.stage || "Hardening",
-      crop: formData.crop || "Banana",
-      sampleType: formData.sampleType || "Visual",
-      testType: formData.testType || "Quality Check",
-      result: formRefs.result.current?.value || "",
-      testedBy: formRefs.testedBy.current?.value || "",
-      remarks: formRefs.remarks.current?.value || "",
-      govVerified: formData.govVerified || "No",
-      certNumber: formRefs.certNumber.current?.value || "",
-      status: (formData.status || "pending") as StatusType,
+      id: form.id,
+      date: form.date,
+      batchID: form.batchID,
+      stage: form.stage,
+      crop: form.crop,
+      sampleType: form.sampleType,
+      testType: form.testType,
+      result: form.result,
+      testedBy: form.testedBy,
+      remarks: form.remarks,
+      govVerified: form.govVerified,
+      certNumber: form.certNumber,
+      status: form.status,
     };
-
-    if (editingId && editingRecord) {
-      dispatch(updateRecord({ ...newRecord, id: editingRecord.id }));
-      dispatch(setEditingId(null));
-      setEditingRecord(null);
-    } else {
-      dispatch(addRecord(newRecord));
-    }
-
-    setIsAddModalOpen(false);
-    Object.values(formRefs).forEach((ref) => {
-      if (ref.current && 'value' in ref.current) ref.current.value = "";
+    dispatch(addRecord(newRecord));
+    setForm({
+      id: "",
+      date: "",
+      batchID: "",
+      stage: "",
+      crop: "",
+      sampleType: "",
+      testType: "",
+      result: "",
+      testedBy: "",
+      remarks: "",
+      govVerified: "",
+      certNumber: "",
+      status: "pending",
     });
-    setFormData({ stage: "", crop: "", sampleType: "", testType: "", govVerified: "", status: "" });
-  }, [dispatch, editingId, editingRecord, records.length, formData]);
+    setIsAddModalOpen(false);
+  };
 
   const handleEdit = useCallback((record: OutdoorSamplingRecord) => {
     setEditingRecord(record);
-    dispatch(setEditingId(record.id));
-    setFormData({
+    setForm({
+      id: record.id,
+      date: record.date,
+      batchID: record.batchID,
       stage: record.stage,
       crop: record.crop,
       sampleType: record.sampleType,
       testType: record.testType,
-      govVerified: record.govVerified || "No",
+      result: record.result,
+      testedBy: record.testedBy,
+      remarks: record.remarks,
+      govVerified: record.govVerified || "",
+      certNumber: record.certNumber || "",
       status: record.status,
     });
+    setIsEditModalOpen(true);
+  }, []);
 
-    setTimeout(() => {
-      if (formRefs.id.current) formRefs.id.current.value = record.id;
-      if (formRefs.date.current) formRefs.date.current.value = record.date;
-      if (formRefs.batchID.current) formRefs.batchID.current.value = record.batchID;
-      if (formRefs.stage.current) formRefs.stage.current.value = record.stage;
-      if (formRefs.crop.current) formRefs.crop.current.value = record.crop;
-      if (formRefs.sampleType.current) formRefs.sampleType.current.value = record.sampleType;
-      if (formRefs.testType.current) formRefs.testType.current.value = record.testType;
-      if (formRefs.result.current) formRefs.result.current.value = record.result;
-      if (formRefs.testedBy.current) formRefs.testedBy.current.value = record.testedBy;
-      if (formRefs.remarks.current) formRefs.remarks.current.value = record.remarks;
-      if (formRefs.govVerified.current) formRefs.govVerified.current.value = record.govVerified || "No";
-      if (formRefs.certNumber.current) formRefs.certNumber.current.value = record.certNumber || "";
-      if (formRefs.status.current) formRefs.status.current.value = record.status;
-    }, 0);
+  const handleSaveEdit = () => {
+    if (editingRecord) {
+      const updatedRecord: OutdoorSamplingRecord = {
+        id: form.id,
+        date: form.date,
+        batchID: form.batchID,
+        stage: form.stage,
+        crop: form.crop,
+        sampleType: form.sampleType,
+        testType: form.testType,
+        result: form.result,
+        testedBy: form.testedBy,
+        remarks: form.remarks,
+        govVerified: form.govVerified,
+        certNumber: form.certNumber,
+        status: form.status,
+      };
+      dispatch(updateRecord(updatedRecord));
+      setForm({
+        id: "",
+        date: "",
+        batchID: "",
+        stage: "",
+        crop: "",
+        sampleType: "",
+        testType: "",
+        result: "",
+        testedBy: "",
+        remarks: "",
+        govVerified: "",
+        certNumber: "",
+        status: "pending",
+      });
+      setEditingRecord(null);
+      setIsEditModalOpen(false);
+    }
+  };
 
-    setIsAddModalOpen(true);
-  }, [dispatch]);
+  const handleDeleteFromEdit = () => {
+    if (editingRecord) {
+      dispatch(deleteRecord(editingRecord.id));
+      setForm({
+        id: "",
+        date: "",
+        batchID: "",
+        stage: "",
+        crop: "",
+        sampleType: "",
+        testType: "",
+        result: "",
+        testedBy: "",
+        remarks: "",
+        govVerified: "",
+        certNumber: "",
+        status: "pending",
+      });
+      setEditingRecord(null);
+      setIsEditModalOpen(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setForm({
+      id: "",
+      date: "",
+      batchID: "",
+      stage: "",
+      crop: "",
+      sampleType: "",
+      testType: "",
+      result: "",
+      testedBy: "",
+      remarks: "",
+      govVerified: "",
+      certNumber: "",
+      status: "pending",
+    });
+    setEditingRecord(null);
+    setIsEditModalOpen(false);
+  };
 
   const handleDelete = useCallback((id: string) => {
     dispatch(deleteRecord(id));
-  }, [dispatch]);
-
-  const handleCloseModal = useCallback(() => {
-    setIsAddModalOpen(false);
-    dispatch(setEditingId(null));
-    setEditingRecord(null);
-    Object.values(formRefs).forEach((ref) => {
-      if (ref.current) ref.current.value = "";
-    });
-    setFormData({ stage: "", crop: "", sampleType: "", testType: "", govVerified: "", status: "" });
   }, [dispatch]);
 
   return (
@@ -152,7 +207,7 @@ export function OutdoorSampling() {
       <div className="flex items-center justify-between">
         <div>
           <h1>Outdoor Sampling</h1>
-          <p className="text-[#717182] mt-1">Field-level quality control and testing</p>
+          <p className="text-[#717182] mt-1">Track quality control sampling and testing</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" className="gap-2">
@@ -163,137 +218,6 @@ export function OutdoorSampling() {
             <Download className="w-4 h-4" />
             Export
           </Button>
-          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2 bg-[#4CAF50] hover:bg-[#45a049]">
-                <Plus className="w-4 h-4" />
-                Add Sample Record
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>{editingId ? "Edit Sample Record" : "Add Outdoor Sample Record"}</DialogTitle>
-              </DialogHeader>
-              <div className="grid grid-cols-2 gap-4 py-4 max-h-96 overflow-y-auto">
-                <div className="space-y-2">
-                  <Label>Sample ID</Label>
-                  <Input ref={formRefs.id} placeholder="OS-2024-XXX" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Date</Label>
-                  <Input ref={formRefs.date} type="date" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Batch ID</Label>
-                  <Input ref={formRefs.batchID} placeholder="PH-2024-XXX or SH-2024-XXX" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Stage</Label>
-                  <Select value={formData.stage} onValueChange={(v) => { setFormData(prev => ({ ...prev, stage: v })); if (formRefs.stage.current) formRefs.stage.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.stage as any} className="bg-white">
-                      <SelectValue placeholder="Select stage" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="Primary">Primary Hardening</SelectItem>
-                      <SelectItem value="Secondary">Secondary Hardening</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Crop Type</Label>
-                  <Select value={formData.crop} onValueChange={(v) => { setFormData(prev => ({ ...prev, crop: v })); if (formRefs.crop.current) formRefs.crop.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.crop as any} className="bg-white">
-                      <SelectValue placeholder="Select crop" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="Banana">Banana</SelectItem>
-                      <SelectItem value="Bamboo">Bamboo</SelectItem>
-                      <SelectItem value="Teak">Teak</SelectItem>
-                      <SelectItem value="Ornamental">Ornamental</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Sample Type</Label>
-                  <Select value={formData.sampleType} onValueChange={(v) => { setFormData(prev => ({ ...prev, sampleType: v })); if (formRefs.sampleType.current) formRefs.sampleType.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.sampleType as any} className="bg-white">
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="Plant Health">Plant Health</SelectItem>
-                      <SelectItem value="Soil Quality">Soil Quality</SelectItem>
-                      <SelectItem value="Water Quality">Water Quality</SelectItem>
-                      <SelectItem value="Pest & Disease">Pest & Disease</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Test Type</Label>
-                  <Select value={formData.testType} onValueChange={(v) => { setFormData(prev => ({ ...prev, testType: v })); if (formRefs.testType.current) formRefs.testType.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.testType as any} className="bg-white">
-                      <SelectValue placeholder="Select test" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="Visual Inspection">Visual Inspection</SelectItem>
-                      <SelectItem value="Leaf Analysis">Leaf Analysis</SelectItem>
-                      <SelectItem value="pH & Nutrients">pH & Nutrients</SelectItem>
-                      <SelectItem value="Contamination">Contamination</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Result</Label>
-                  <Input ref={formRefs.result} placeholder="Test result" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Tested By</Label>
-                  <Input ref={formRefs.testedBy} placeholder="Technician name" />
-                </div>
-                <div className="space-y-2 col-span-2">
-                  <Label>Remarks</Label>
-                  <Textarea ref={formRefs.remarks} placeholder="Enter remarks" rows={2} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Verified by Government</Label>
-                  <Select value={formData.govVerified} onValueChange={(v) => { setFormData(prev => ({ ...prev, govVerified: v })); if (formRefs.govVerified.current) formRefs.govVerified.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.govVerified as any} className="bg-white">
-                      <SelectValue placeholder="Select verification status" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="Yes">Yes</SelectItem>
-                      <SelectItem value="No">No</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Certificate Number</Label>
-                  <Input ref={formRefs.certNumber} placeholder="Enter certificate number" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <Select value={formData.status} onValueChange={(v) => { setFormData(prev => ({ ...prev, status: v })); if (formRefs.status.current) formRefs.status.current.value = v; }}>
-                    <SelectTrigger ref={formRefs.status as any} className="bg-white">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="contaminated">Contaminated</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={handleCloseModal}>
-                  Cancel
-                </Button>
-                <Button className="bg-[#4CAF50] hover:bg-[#45a049]" onClick={handleAdd}>
-                  {editingId ? "Update" : "Save"} Record
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
         </div>
       </div>
 
@@ -307,7 +231,7 @@ export function OutdoorSampling() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex gap-4 items-center">
             <Input
-              placeholder="Search outdoor samples..."
+              placeholder="Search sampling records..."
               className="max-w-xs"
               value={searchTerm}
               onChange={(e) => dispatch(setSearchTerm(e.target.value))}
@@ -325,17 +249,159 @@ export function OutdoorSampling() {
               </SelectContent>
             </Select>
           </div>
-          <h3>Outdoor Sampling Register</h3>
+          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2 bg-[#4CAF50] hover:bg-[#45a049]">
+                <Plus className="w-4 h-4" />
+                Add Sampling Record
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Add Outdoor Sampling Record</DialogTitle>
+              </DialogHeader>
+              <div className="grid grid-cols-2 gap-4 py-4">
+                <div className="space-y-2">
+                  <Label>Sample ID</Label>
+                  <Input placeholder="OS-2024-XXX" value={form.id} onChange={(e) => setForm({...form, id: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Date</Label>
+                  <Input type="date" value={form.date} onChange={(e) => setForm({...form, date: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Batch ID</Label>
+                  <Input placeholder="SH-2024-XXX" value={form.batchID} onChange={(e) => setForm({...form, batchID: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Stage</Label>
+                  <Select value={form.stage} onValueChange={(v) => setForm({...form, stage: v})}>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select stage" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="Primary Hardening">Primary Hardening</SelectItem>
+                      <SelectItem value="Secondary Hardening">Secondary Hardening</SelectItem>
+                      <SelectItem value="Holding Area">Holding Area</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Crop</Label>
+                  <Select value={form.crop} onValueChange={(v) => setForm({...form, crop: v})}>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select crop" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="Banana">Banana</SelectItem>
+                      <SelectItem value="Bamboo">Bamboo</SelectItem>
+                      <SelectItem value="Teak">Teak</SelectItem>
+                      <SelectItem value="Ornamental">Ornamental</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Sample Type</Label>
+                  <Select value={form.sampleType} onValueChange={(v) => setForm({...form, sampleType: v})}>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select sample type" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="Leaf">Leaf</SelectItem>
+                      <SelectItem value="Root">Root</SelectItem>
+                      <SelectItem value="Stem">Stem</SelectItem>
+                      <SelectItem value="Soil">Soil</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Test Type</Label>
+                  <Select value={form.testType} onValueChange={(v) => setForm({...form, testType: v})}>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select test type" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="Contamination">Contamination</SelectItem>
+                      <SelectItem value="Disease">Disease</SelectItem>
+                      <SelectItem value="Quality">Quality</SelectItem>
+                      <SelectItem value="Genetics">Genetics</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Result</Label>
+                  <Select value={form.result} onValueChange={(v) => setForm({...form, result: v})}>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select result" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="Pass">Pass</SelectItem>
+                      <SelectItem value="Fail">Fail</SelectItem>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Tested By</Label>
+                  <Input placeholder="Technician name" value={form.testedBy} onChange={(e) => setForm({...form, testedBy: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Government Verified</Label>
+                  <Select value={form.govVerified} onValueChange={(v) => setForm({...form, govVerified: v})}>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select verification" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="Yes">Yes</SelectItem>
+                      <SelectItem value="No">No</SelectItem>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Certificate Number</Label>
+                  <Input placeholder="Enter certificate number" value={form.certNumber} onChange={(e) => setForm({...form, certNumber: e.target.value})} />
+                </div>
+                <div className="space-y-2 col-span-2">
+                  <Label>Remarks</Label>
+                  <Textarea placeholder="Enter remarks" value={form.remarks} onChange={(e) => setForm({...form, remarks: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select value={form.status} onValueChange={(v: any) => setForm({...form, status: v})}>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="contaminated">Contaminated</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button className="bg-[#4CAF50] hover:bg-[#45a049]" onClick={handleAdd}>
+                  Save Record
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
-        <div className="border rounded-lg overflow-hidden">
+        <div className="border rounded-lg overflow-hidden mt-4">
           <Table>
             <TableHeader>
               <TableRow className="bg-[#F5F5F5]">
                 <TableHead className="font-bold text-[#333333]">ID</TableHead>
-                <TableHead className="font-bold text-[#333333]">Crop</TableHead>
+                <TableHead className="font-bold text-[#333333]">Date</TableHead>
+                <TableHead className="font-bold text-[#333333]">Batch ID</TableHead>
+                <TableHead className="font-bold text-[#333333]">Stage</TableHead>
                 <TableHead className="font-bold text-[#333333]">Test Type</TableHead>
                 <TableHead className="font-bold text-[#333333]">Result</TableHead>
-                <TableHead className="font-bold text-[#333333]">Gov. Verified</TableHead>
                 <TableHead className="font-bold text-[#333333]">Status</TableHead>
                 <TableHead className="font-bold text-[#333333]">Actions</TableHead>
               </TableRow>
@@ -344,10 +410,11 @@ export function OutdoorSampling() {
               {filteredRecords.map((record) => (
                 <TableRow key={record.id} className="hover:bg-[#F3FFF4] transition-colors">
                   <TableCell>{record.id}</TableCell>
-                  <TableCell>{record.crop}</TableCell>
+                  <TableCell>{record.date}</TableCell>
+                  <TableCell>{record.batchID}</TableCell>
+                  <TableCell>{record.stage}</TableCell>
                   <TableCell>{record.testType}</TableCell>
                   <TableCell>{record.result}</TableCell>
-                  <TableCell>{record.govVerified || "N/A"}</TableCell>
                   <TableCell>
                     <StatusBadge status={record.status} />
                   </TableCell>
@@ -365,6 +432,148 @@ export function OutdoorSampling() {
           </Table>
         </div>
       </Card>
+
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Outdoor Sampling Record</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4 py-4">
+            <div className="space-y-2">
+              <Label>Sample ID</Label>
+              <Input placeholder="OS-2024-XXX" value={form.id} onChange={(e) => setForm({...form, id: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Date</Label>
+              <Input type="date" value={form.date} onChange={(e) => setForm({...form, date: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Batch ID</Label>
+              <Input placeholder="SH-2024-XXX" value={form.batchID} onChange={(e) => setForm({...form, batchID: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Stage</Label>
+              <Select value={form.stage} onValueChange={(v) => setForm({...form, stage: v})}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Select stage" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="Primary Hardening">Primary Hardening</SelectItem>
+                  <SelectItem value="Secondary Hardening">Secondary Hardening</SelectItem>
+                  <SelectItem value="Holding Area">Holding Area</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Crop</Label>
+              <Select value={form.crop} onValueChange={(v) => setForm({...form, crop: v})}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Select crop" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="Banana">Banana</SelectItem>
+                  <SelectItem value="Bamboo">Bamboo</SelectItem>
+                  <SelectItem value="Teak">Teak</SelectItem>
+                  <SelectItem value="Ornamental">Ornamental</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Sample Type</Label>
+              <Select value={form.sampleType} onValueChange={(v) => setForm({...form, sampleType: v})}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Select sample type" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="Leaf">Leaf</SelectItem>
+                  <SelectItem value="Root">Root</SelectItem>
+                  <SelectItem value="Stem">Stem</SelectItem>
+                  <SelectItem value="Soil">Soil</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Test Type</Label>
+              <Select value={form.testType} onValueChange={(v) => setForm({...form, testType: v})}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Select test type" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="Contamination">Contamination</SelectItem>
+                  <SelectItem value="Disease">Disease</SelectItem>
+                  <SelectItem value="Quality">Quality</SelectItem>
+                  <SelectItem value="Genetics">Genetics</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Result</Label>
+              <Select value={form.result} onValueChange={(v) => setForm({...form, result: v})}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Select result" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="Pass">Pass</SelectItem>
+                  <SelectItem value="Fail">Fail</SelectItem>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Tested By</Label>
+              <Input placeholder="Technician name" value={form.testedBy} onChange={(e) => setForm({...form, testedBy: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Government Verified</Label>
+              <Select value={form.govVerified} onValueChange={(v) => setForm({...form, govVerified: v})}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Select verification" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="Yes">Yes</SelectItem>
+                  <SelectItem value="No">No</SelectItem>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Certificate Number</Label>
+              <Input placeholder="Enter certificate number" value={form.certNumber} onChange={(e) => setForm({...form, certNumber: e.target.value})} />
+            </div>
+            <div className="space-y-2 col-span-2">
+              <Label>Remarks</Label>
+              <Textarea placeholder="Enter remarks" value={form.remarks} onChange={(e) => setForm({...form, remarks: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select value={form.status} onValueChange={(v: any) => setForm({...form, status: v})}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="contaminated">Contaminated</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-between">
+            <Button variant="destructive" onClick={handleDeleteFromEdit}>
+              Delete Entry
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleCancelEdit}>
+                Cancel
+              </Button>
+              <Button className="bg-[#4CAF50] hover:bg-[#45a049]" onClick={handleSaveEdit}>
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
