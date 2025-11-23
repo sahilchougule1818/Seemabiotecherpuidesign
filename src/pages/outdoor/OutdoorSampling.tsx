@@ -222,10 +222,6 @@ export function OutdoorSampling() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" className="gap-2">
-            <Filter className="w-4 h-4" />
-            Filter
-          </Button>
-          <Button variant="outline" className="gap-2">
             <Download className="w-4 h-4" />
             Export
           </Button>
@@ -242,10 +238,10 @@ export function OutdoorSampling() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
             <Select value={batchFilter} onValueChange={setBatchFilter}>
-              <SelectTrigger className="max-w-xs">
+              <SelectTrigger className="max-w-xs bg-white text-black">
                 <SelectValue placeholder="Select batch code" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white">
                 {uniqueBatchCodes.map((batch) => (
                   <SelectItem key={batch} value={batch}>{batch}</SelectItem>
                 ))}
