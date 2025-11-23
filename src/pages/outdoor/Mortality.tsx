@@ -78,6 +78,10 @@ export function Mortality() {
   };
 
   const handleAdd = () => {
+    if (!form.id || !form.date || !form.batchID || !form.crop || !form.stage || !form.initialCount || !form.status) {
+      alert("Please fill in all required fields");
+      return;
+    }
     const initialCount = parseInt(form.initialCount) || 0;
     const mortality = parseInt(form.mortality) || 0;
     const newRecord: MortalityRecord = {
@@ -117,6 +121,10 @@ export function Mortality() {
   }, []);
 
   const handleSaveEdit = () => {
+    if (!form.id || !form.date || !form.batchID || !form.crop || !form.stage || !form.initialCount || !form.status) {
+      alert("Please fill in all required fields");
+      return;
+    }
     if (editingRecord) {
       const initialCount = parseInt(form.initialCount) || 0;
       const mortality = parseInt(form.mortality) || 0;

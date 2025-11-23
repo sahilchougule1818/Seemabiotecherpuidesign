@@ -69,6 +69,10 @@ export function Sampling() {
   }, [records, searchTerm, filterValue, batchFilter, showFiltered]);
 
   const handleAdd = () => {
+    if (!form.id || !form.date || !form.batchID || !form.sampleType || !form.testType || !form.testedBy || !form.status) {
+      alert("Please fill in all required fields");
+      return;
+    }
     const newRecord: IndoorSamplingRecord = {
       id: form.id,
       date: form.date,
@@ -106,6 +110,10 @@ export function Sampling() {
   }, []);
 
   const handleSaveEdit = () => {
+    if (!form.id || !form.date || !form.batchID || !form.sampleType || !form.testType || !form.testedBy || !form.status) {
+      alert("Please fill in all required fields");
+      return;
+    }
     if (editingRecord) {
       const updatedRecord: IndoorSamplingRecord = {
         id: form.id,

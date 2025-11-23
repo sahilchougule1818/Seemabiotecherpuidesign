@@ -114,6 +114,25 @@ src/
 - Form Data: Captured via state + refs hybrid approach for Select/Input handling
 
 ## Latest Fixes (2025-11-23) - COMPLETED ✅
+
+### Button Component Fix & Form Validation (Latest)
+- **Button Component**: Fixed to use `React.forwardRef` for proper ref forwarding with Radix UI Dialog components
+- **Form Validation**: Added validation to all modules to prevent empty field submissions
+  - Indoor Sampling: validates required fields (id, date, batchID, sampleType, testType, testedBy, status)
+  - Mortality: validates required fields (id, date, batchID, crop, stage, initialCount, status)
+  - Primary Hardening: validates required fields (id, date, batchName, crop, tunnel, plants, status)
+- **Alert System**: User-friendly alerts when required fields are missing
+- **Data Integrity**: Validation prevents corrupted/empty records from being saved to Redux/localStorage
+
+### Full Redux & CRUD Implementation (All Modules)
+- **Indoor Sampling**: Fully connected to Redux with add/edit/delete modals + batch filtering
+- **Mortality Register**: Fully connected to Redux with add/edit/delete modals + batch filtering + calculated stats
+- **Primary Hardening**: Fully connected to Redux with add/edit/delete modals + batch filtering
+- **Batch Code Filtering**: All three modules have batch dropdown + Search button + Show All Data button
+- **Add Buttons**: Positioned near tables in all modules for consistent UX
+- **Modal Forms**: Scroll-enabled with all required fields for each module
+
+### Previous Fixes
 - **Add Forms - ALL PAGES**: Fully functional with formData state for all Select components
   - Subculturing: crop, stage, mediaUsed, status
   - Incubation: chamber, status
@@ -123,7 +142,7 @@ src/
 - **Multi-Select Dropdowns**: White background (bg-white) applied to SelectTrigger & SelectContent on ALL pages
 - **Form Reset**: After submit, all forms reset properly (refs cleared, formData reset to empty)
 - **Data Persistence**: Form data immediately appears in table after submit
-- **CRUD Operations**: All Add/Edit/Delete operations fully functional on all 5 pages
+- **CRUD Operations**: All Add/Edit/Delete operations fully functional on all modules
 - **State Synchronization**: formData state + refs hybrid approach ensures proper Select value capture
 - **useLocalStorage Hook**: Created in `/src/hooks/useLocalStorage.ts` with localStorage persistence
 - **AppContext (Global Context)**: Created in `/src/context/AppContext.tsx` for global state management

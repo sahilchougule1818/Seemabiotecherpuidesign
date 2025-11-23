@@ -71,6 +71,10 @@ export function PrimaryHardening() {
   }, [records, searchTerm, filterValue, batchFilter, showFiltered]);
 
   const handleAdd = () => {
+    if (!form.id || !form.date || !form.batchName || !form.crop || !form.tunnel || !form.plants || !form.status) {
+      alert("Please fill in all required fields");
+      return;
+    }
     const newRecord: PrimaryHardeningRecord = {
       id: form.id,
       date: form.date,
@@ -110,6 +114,10 @@ export function PrimaryHardening() {
   }, []);
 
   const handleSaveEdit = () => {
+    if (!form.id || !form.date || !form.batchName || !form.crop || !form.tunnel || !form.plants || !form.status) {
+      alert("Please fill in all required fields");
+      return;
+    }
     if (editingRecord) {
       const updatedRecord: PrimaryHardeningRecord = {
         id: form.id,
