@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Plus, Filter, Download } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
@@ -11,28 +12,73 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { StatusBadge, StatusType } from "../../components/common/StatusBadge";
 import { StatsCard } from "../../components/common/StatsCard";
 import { FlaskConical, CheckCircle, Clock, AlertTriangle } from "lucide-react";
+import { RootState } from "../../store/store";
+import { addAutoclaveRecord, addMediaBatchRecord, AutoclaveRecord, MediaBatchRecord } from "../../store/slices/mediaPreparationSlice";
 
 export function MediaPreparation() {
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const dispatch = useDispatch();
+  const { autoclaveRecords, mediaBatchRecords } = useSelector((state: RootState) => state.mediaPreparation);
+  
+  const [isAddAutoclaveModalOpen, setIsAddAutoclaveModalOpen] = useState(false);
+  const [isAddMediaModalOpen, setIsAddMediaModalOpen] = useState(false);
+  
+  const [autoclaveForm, setAutoclaveForm] = useState({
+    id: "",
+    date: "",
+    batch: "",
+    temperature: "",
+    pressure: "",
+    duration: "",
+    status: "pending" as StatusType
+  });
+  
+  const [mediaForm, setMediaForm] = useState({
+    id: "",
+    prepDate: "",
+    mediaType: "",
+    quantity: "",
+    pH: "",
+    preparedBy: "",
+    status: "pending" as StatusType
+  });
+  
+  const handleAddAutoclave = () => {
+    if (autoclaveForm.id && autoclaveForm.date && autoclaveForm.batch) {
+      dispatch(addAutoclaveRecord(autoclaveForm));
+      setAutoclaveForm({
+        id: "",
+        date: "",
+        batch: "",
+        temperature: "",
+        pressure: "",
+        duration: "",
+        status: "pending"
+      });
+      setIsAddAutoclaveModalOpen(false);
+    }
+  };
+  
+  const handleAddMediaBatch = () => {
+    if (mediaForm.id && mediaForm.prepDate && mediaForm.mediaType) {
+      dispatch(addMediaBatchRecord(mediaForm));
+      setMediaForm({
+        id: "",
+        prepDate: "",
+        mediaType: "",
+        quantity: "",
+        pH: "",
+        preparedBy: "",
+        status: "pending"
+      });
+      setIsAddMediaModalOpen(false);
+    }
+  };
 
   const stats = [
-    { title: "Total Batches", value: "48", icon: FlaskConical, trend: { value: "+12% this month", isPositive: true } },
-    { title: "Active Batches", value: "15", icon: CheckCircle },
-    { title: "Pending Autoclave", value: "8", icon: Clock },
-    { title: "Contaminated", value: "2", icon: AlertTriangle, trend: { value: "-5% vs last month", isPositive: true } },
-  ];
-
-  const autoclaveData = [
-    { id: "AC-001", date: "2024-11-20", batch: "MB-2024-001", temperature: "121°C", pressure: "15 PSI", duration: "20 min", status: "completed" as StatusType },
-    { id: "AC-002", date: "2024-11-21", batch: "MB-2024-002", temperature: "121°C", pressure: "15 PSI", duration: "20 min", status: "active" as StatusType },
-    { id: "AC-003", date: "2024-11-22", batch: "MB-2024-003", temperature: "121°C", pressure: "15 PSI", duration: "20 min", status: "pending" as StatusType },
-    { id: "AC-004", date: "2024-11-22", batch: "MB-2024-004", temperature: "121°C", pressure: "15 PSI", duration: "20 min", status: "contaminated" as StatusType },
-  ];
-
-  const mediaBatchData = [
-    { id: "MB-2024-001", prepDate: "2024-11-18", mediaType: "MS Medium", quantity: "5L", pH: "5.8", preparedBy: "Rajesh Kumar", status: "completed" as StatusType },
-    { id: "MB-2024-002", prepDate: "2024-11-19", mediaType: "WPM Medium", quantity: "3L", pH: "5.7", preparedBy: "Priya Sharma", status: "active" as StatusType },
-    { id: "MB-2024-003", prepDate: "2024-11-20", mediaType: "MS Medium", quantity: "4L", pH: "5.8", preparedBy: "Amit Patel", status: "pending" as StatusType },
+    { title: "Total Batches", value: mediaBatchRecords.length.toString(), icon: FlaskConical, trend: { value: "+12% this month", isPositive: true } },
+    { title: "Active Batches", value: mediaBatchRecords.filter(b => b.status === "active").length.toString(), icon: CheckCircle },
+    { title: "Pending Autoclave", value: autoclaveRecords.filter(a => a.status === "pending").length.toString(), icon: Clock },
+    { title: "Contaminated", value: autoclaveRecords.filter(a => a.status === "contaminated").length.toString(), icon: AlertTriangle, trend: { value: "-5% vs last month", isPositive: true } },
   ];
 
   return (
@@ -52,75 +98,6 @@ export function MediaPreparation() {
             <Download className="w-4 h-4" />
             Export
           </Button>
-          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2 bg-[#4CAF50] hover:bg-[#45a049]">
-                <Plus className="w-4 h-4" />
-                Add Media Batch
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Add New Media Batch</DialogTitle>
-              </DialogHeader>
-              <div className="grid grid-cols-2 gap-4 py-4">
-                <div className="space-y-2">
-                  <Label>Batch ID</Label>
-                  <Input placeholder="MB-2024-XXX" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Preparation Date</Label>
-                  <Input type="date" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Media Type</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select media type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ms">MS Medium</SelectItem>
-                      <SelectItem value="wpm">WPM Medium</SelectItem>
-                      <SelectItem value="b5">B5 Medium</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Quantity (L)</Label>
-                  <Input type="number" placeholder="5.0" />
-                </div>
-                <div className="space-y-2">
-                  <Label>pH Level</Label>
-                  <Input type="number" placeholder="5.8" step="0.1" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Prepared By</Label>
-                  <Input placeholder="Employee name" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
-                  Cancel
-                </Button>
-                <Button className="bg-[#4CAF50] hover:bg-[#45a049]" onClick={() => setIsAddModalOpen(false)}>
-                  Save Batch
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
         </div>
       </div>
 
@@ -152,7 +129,94 @@ export function MediaPreparation() {
           <TabsContent value="autoclave" className="space-y-4">
             <div className="flex items-center justify-between">
               <h3>Autoclave Register</h3>
-              <Input placeholder="Search autoclave records..." className="max-w-xs" />
+              <div className="flex gap-2">
+                <Input placeholder="Search autoclave records..." className="max-w-xs" />
+                <Dialog open={isAddAutoclaveModalOpen} onOpenChange={setIsAddAutoclaveModalOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="gap-2 bg-[#4CAF50] hover:bg-[#45a049]">
+                      <Plus className="w-4 h-4" />
+                      Add Autoclave Cycle
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>Add Autoclave Cycle</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid grid-cols-2 gap-4 py-4">
+                      <div className="space-y-2">
+                        <Label>Autoclave ID</Label>
+                        <Input 
+                          placeholder="AC-XXX" 
+                          value={autoclaveForm.id}
+                          onChange={(e) => setAutoclaveForm({...autoclaveForm, id: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Date</Label>
+                        <Input 
+                          type="date"
+                          value={autoclaveForm.date}
+                          onChange={(e) => setAutoclaveForm({...autoclaveForm, date: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Batch No.</Label>
+                        <Input 
+                          placeholder="MB-2024-XXX"
+                          value={autoclaveForm.batch}
+                          onChange={(e) => setAutoclaveForm({...autoclaveForm, batch: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Temperature</Label>
+                        <Input 
+                          placeholder="121°C"
+                          value={autoclaveForm.temperature}
+                          onChange={(e) => setAutoclaveForm({...autoclaveForm, temperature: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Pressure</Label>
+                        <Input 
+                          placeholder="15 PSI"
+                          value={autoclaveForm.pressure}
+                          onChange={(e) => setAutoclaveForm({...autoclaveForm, pressure: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Duration</Label>
+                        <Input 
+                          placeholder="20 min"
+                          value={autoclaveForm.duration}
+                          onChange={(e) => setAutoclaveForm({...autoclaveForm, duration: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Status</Label>
+                        <Select value={autoclaveForm.status} onValueChange={(value) => setAutoclaveForm({...autoclaveForm, status: value as StatusType})}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                            <SelectItem value="contaminated">Contaminated</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setIsAddAutoclaveModalOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button className="bg-[#4CAF50] hover:bg-[#45a049]" onClick={handleAddAutoclave}>
+                        Save Cycle
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
             <div className="border rounded-lg overflow-hidden">
               <Table>
@@ -169,7 +233,7 @@ export function MediaPreparation() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {autoclaveData.map((row) => (
+                  {autoclaveRecords.map((row) => (
                     <TableRow key={row.id} className="hover:bg-[#F3FFF4] transition-colors">
                       <TableCell>{row.id}</TableCell>
                       <TableCell>{row.date}</TableCell>
@@ -193,7 +257,99 @@ export function MediaPreparation() {
           <TabsContent value="media" className="space-y-4">
             <div className="flex items-center justify-between">
               <h3>Media Batch Register</h3>
-              <Input placeholder="Search media batches..." className="max-w-xs" />
+              <div className="flex gap-2">
+                <Input placeholder="Search media batches..." className="max-w-xs" />
+                <Dialog open={isAddMediaModalOpen} onOpenChange={setIsAddMediaModalOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="gap-2 bg-[#4CAF50] hover:bg-[#45a049]">
+                      <Plus className="w-4 h-4" />
+                      Add Media Batch
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>Add Media Batch</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid grid-cols-2 gap-4 py-4">
+                      <div className="space-y-2">
+                        <Label>Batch ID</Label>
+                        <Input 
+                          placeholder="MB-2024-XXX" 
+                          value={mediaForm.id}
+                          onChange={(e) => setMediaForm({...mediaForm, id: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Prep Date</Label>
+                        <Input 
+                          type="date"
+                          value={mediaForm.prepDate}
+                          onChange={(e) => setMediaForm({...mediaForm, prepDate: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Media Type</Label>
+                        <Select value={mediaForm.mediaType} onValueChange={(value) => setMediaForm({...mediaForm, mediaType: value})}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select media type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="MS Medium">MS Medium</SelectItem>
+                            <SelectItem value="WPM Medium">WPM Medium</SelectItem>
+                            <SelectItem value="B5 Medium">B5 Medium</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Quantity</Label>
+                        <Input 
+                          placeholder="5L"
+                          value={mediaForm.quantity}
+                          onChange={(e) => setMediaForm({...mediaForm, quantity: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>pH</Label>
+                        <Input 
+                          placeholder="5.8"
+                          value={mediaForm.pH}
+                          onChange={(e) => setMediaForm({...mediaForm, pH: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Prepared By</Label>
+                        <Input 
+                          placeholder="Employee name"
+                          value={mediaForm.preparedBy}
+                          onChange={(e) => setMediaForm({...mediaForm, preparedBy: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Status</Label>
+                        <Select value={mediaForm.status} onValueChange={(value) => setMediaForm({...mediaForm, status: value as StatusType})}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                            <SelectItem value="contaminated">Contaminated</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setIsAddMediaModalOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button className="bg-[#4CAF50] hover:bg-[#45a049]" onClick={handleAddMediaBatch}>
+                        Save Batch
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
             <div className="border rounded-lg overflow-hidden">
               <Table>
@@ -210,7 +366,7 @@ export function MediaPreparation() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mediaBatchData.map((row) => (
+                  {mediaBatchRecords.map((row) => (
                     <TableRow key={row.id} className="hover:bg-[#F3FFF4] transition-colors">
                       <TableCell>{row.id}</TableCell>
                       <TableCell>{row.prepDate}</TableCell>
@@ -231,82 +387,6 @@ export function MediaPreparation() {
             </div>
           </TabsContent>
         </Tabs>
-      </Card>
-
-      {/* 8-Stage Tissue Culture Workflow */}
-      <Card className="p-6 bg-white border-border/50">
-        <h3 className="mb-4">8-Stage Tissue Culture Workflow</h3>
-        <div className="border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-[#F5F5F5]">
-                <TableHead className="font-bold text-[#333333]">Stage</TableHead>
-                <TableHead className="font-bold text-[#333333]">Process</TableHead>
-                <TableHead className="font-bold text-[#333333]">Duration</TableHead>
-                <TableHead className="font-bold text-[#333333]">Operator</TableHead>
-                <TableHead className="font-bold text-[#333333]">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow className="hover:bg-[#F3FFF4] transition-colors">
-                <TableCell className="font-medium">Stage 1</TableCell>
-                <TableCell>Mother Plant Selection</TableCell>
-                <TableCell>2 days</TableCell>
-                <TableCell>Rajesh Kumar</TableCell>
-                <TableCell><StatusBadge status="completed" /></TableCell>
-              </TableRow>
-              <TableRow className="hover:bg-[#F3FFF4] transition-colors">
-                <TableCell className="font-medium">Stage 2</TableCell>
-                <TableCell>Explant Preparation</TableCell>
-                <TableCell>1 day</TableCell>
-                <TableCell>Priya Sharma</TableCell>
-                <TableCell><StatusBadge status="completed" /></TableCell>
-              </TableRow>
-              <TableRow className="hover:bg-[#F3FFF4] transition-colors">
-                <TableCell className="font-medium">Stage 3</TableCell>
-                <TableCell>Surface Sterilization</TableCell>
-                <TableCell>3 hours</TableCell>
-                <TableCell>Amit Patel</TableCell>
-                <TableCell><StatusBadge status="completed" /></TableCell>
-              </TableRow>
-              <TableRow className="hover:bg-[#F3FFF4] transition-colors">
-                <TableCell className="font-medium">Stage 4</TableCell>
-                <TableCell>Inoculation</TableCell>
-                <TableCell>1 day</TableCell>
-                <TableCell>Sunita Verma</TableCell>
-                <TableCell><StatusBadge status="active" /></TableCell>
-              </TableRow>
-              <TableRow className="hover:bg-[#F3FFF4] transition-colors">
-                <TableCell className="font-medium">Stage 5</TableCell>
-                <TableCell>Multiplication</TableCell>
-                <TableCell>21 days</TableCell>
-                <TableCell>Vikram Singh</TableCell>
-                <TableCell><StatusBadge status="pending" /></TableCell>
-              </TableRow>
-              <TableRow className="hover:bg-[#F3FFF4] transition-colors">
-                <TableCell className="font-medium">Stage 6</TableCell>
-                <TableCell>Rooting</TableCell>
-                <TableCell>14 days</TableCell>
-                <TableCell>Anjali Reddy</TableCell>
-                <TableCell><StatusBadge status="pending" /></TableCell>
-              </TableRow>
-              <TableRow className="hover:bg-[#F3FFF4] transition-colors">
-                <TableCell className="font-medium">Stage 7</TableCell>
-                <TableCell>Acclimatization</TableCell>
-                <TableCell>10 days</TableCell>
-                <TableCell>Deepak Gupta</TableCell>
-                <TableCell><StatusBadge status="pending" /></TableCell>
-              </TableRow>
-              <TableRow className="hover:bg-[#F3FFF4] transition-colors">
-                <TableCell className="font-medium">Stage 8</TableCell>
-                <TableCell>Hardening & Transfer</TableCell>
-                <TableCell>7 days</TableCell>
-                <TableCell>Meena Iyer</TableCell>
-                <TableCell><StatusBadge status="pending" /></TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </div>
       </Card>
     </div>
   );
