@@ -1,262 +1,37 @@
 # Seema Biotech ERP UI Design
 
 ## Overview
-This is a React-based ERP (Enterprise Resource Planning) UI design for Seema Biotech. The application provides interfaces for managing indoor and outdoor biotech processes including media preparation, subculturing, incubation, hardening, and sampling operations.
+This project is a React-based ERP UI for Seema Biotech, designed to manage indoor and outdoor biotech processes. It provides interfaces for media preparation, subculturing, incubation, hardening, and sampling operations, aiming to streamline biotech workflows.
 
-## Project Architecture
-- **Framework**: React 18 + TypeScript
-- **Build Tool**: Vite 6
-- **Styling**: Tailwind CSS with custom UI components
-- **Routing**: React Router DOM
-- **UI Components**: Radix UI primitives with custom styling
-- **Charts**: Recharts for data visualization
+## User Preferences
+- Design: Dark green (#2E7D32) on light green (#E8F5E9) for better contrast.
+- Operator Names: Indian names (Rajesh, Priya, Amit, Sunita, Vikram, Anjali, Deepak, Meena).
+- Typography: Bold dark gray (#333333) for all headings.
+- Workflow: Rapid feature implementation in fast mode (Redux, search, filter, CRUD all in one go).
+- Tables: Hover effects with light green background for better UX.
+- Multi-Select Dropdowns: White background (#fff) for proper visibility.
+- Form Data: Captured via state + refs hybrid approach for Select/Input handling.
 
-## Tech Stack
-- React 18.3.1 with React Hooks (useState, useEffect, useRef, useCallback, useMemo, useContext)
-- TypeScript 5.3.3
-- Vite 6.3.5
-- Tailwind CSS 3.4.0
+## System Architecture
+The application is built with React 18 and TypeScript, using Vite 6 as the build tool. Tailwind CSS provides custom styling, complemented by Radix UI primitives for robust UI components. React Router DOM handles navigation. State management is centralized using Redux Toolkit and React-Redux, with custom hooks for type-safe access. Data visualization is achieved with Recharts.
+
+Key features include:
+- **State Management**: Centralized Redux store with 9 slices, one per module, implementing `addRecord`, `updateRecord`, `deleteRecord`, `setSearchTerm`, `setFilterStatus`, `setEditingId` actions. Immutable state updates are ensured, with automatic stats calculation and type-safe Redux access via `useAppDispatch()` and `useAppSelector()`.
+- **Search & Filter**: Real-time search across all fields and status-based filtering (All, Pending, Active, Completed, Contaminated) for enhanced data navigation.
+- **CRUD Operations**: Comprehensive Add, Edit, and Delete functionalities with form validation, auto-generated IDs, and immediate state updates.
+- **Form Handling**: Utilizes `useRef`-based inputs, modal dialogs for add/edit, select dropdowns, date inputs, and text areas. Forms reset post-submission.
+- **Data Features**: Includes government verification tracking, certificate number storage, and dynamic status tracking.
+- **UI/UX**: Consistent dark green and light green color scheme, bold dark gray headings, light green table row hover effects, and white backgrounds for multi-select dropdowns. Filter buttons have been removed from all modules for a cleaner UI, and batch dropdown styling has been fixed for better visibility. Search buttons use a consistent blue color.
+- **Routing**: Defined routes for indoor modules (Media Preparation, Subculturing, Incubation, Sampling) and outdoor modules (Primary Hardening, Secondary Hardening, Mortality, Holding Area, Outdoor Sampling).
+
+## External Dependencies
+- React 18
+- TypeScript
+- Vite 6
+- Tailwind CSS
 - React Router DOM
-- Radix UI components
+- Radix UI
 - Lucide React (icons)
-- Redux Toolkit + React-Redux for state management
-
-## Project Structure
-```
-src/
-├── components/
-│   ├── common/         # Shared components (StatsCard, StatusBadge)
-│   ├── figma/          # Figma-related components
-│   ├── layout/         # Layout components (Header, Sidebar, Layout)
-│   └── ui/             # Radix UI components
-├── pages/
-│   ├── indoor/
-│   │   ├── MediaPreparation.tsx    # Redux + Autoclave & Media Batch registers with add forms
-│   │   ├── Subculturing.tsx        # Redux + search/filter + add/edit/delete
-│   │   ├── Incubation.tsx          # Redux + search/filter + add/edit/delete
-│   │   └── Sampling.tsx            # With government verification fields
-│   ├── outdoor/
-│   │   ├── PrimaryHardening.tsx    # Simplified form
-│   │   ├── SecondaryHardening.tsx  # Redux + search/filter + add/edit/delete
-│   │   ├── HoldingArea.tsx         # Redux + search/filter + add/edit/delete
-│   │   ├── OutdoorSampling.tsx     # Redux + gov verification + add/edit/delete
-│   │   └── Mortality.tsx           # Removed charts/graphs
-│   └── Dashboard.tsx
-├── store/
-│   ├── store.ts                    # Redux store configuration
-│   └── slices/
-│       ├── mediaPreparationSlice.ts # Media Preparation reducer + actions
-│       ├── subcultureSlice.ts      # Subculturing reducer + actions
-│       ├── incubationSlice.ts      # Incubation reducer + actions
-│       ├── secondaryHardeningSlice.ts
-│       ├── holdingAreaSlice.ts
-│       └── outdoorSamplingSlice.ts
-├── hooks/
-│   ├── useAppDispatch.ts
-│   ├── useAppSelector.ts
-│   └── index.ts
-├── styles/
-│   └── globals.css
-├── App.tsx
-└── main.tsx
-```
-
-## Development Setup
-- Port: 5000
-- Host: 0.0.0.0 (configured for Replit)
-- Dev Server: Vite with Hot Module Replacement
-- Redux DevTools compatible
-- Hot reload for all pages and Redux slices
-
-## Features Implemented
-
-### State Management (Redux)
-- Centralized Redux store with 9 slices (one per module)
-- Media Preparation: autoclaveRecords and mediaBatchRecords with separate add actions
-- Actions: addRecord, updateRecord, deleteRecord, setSearchTerm, setFilterStatus, setEditingId
-- Immutable state updates using Redux Toolkit
-- Automatic stats calculation from state
-- Custom hooks: useAppDispatch() and useAppSelector() for type-safe Redux access
-
-### Search & Filter
-- Real-time search across all fields
-- Status-based filtering (All, Pending, Active, Completed, Contaminated)
-- Combined search + filter in useMemo for performance
-
-### CRUD Operations
-- **Add**: Form modal with validation, auto-generates IDs
-- **Edit**: Click edit button, form populates with record data, update saves to Redux
-- **Delete**: Click delete button, immediate removal from Redux state
-- **Display**: Table shows all records from Redux state
-
-### Form Handling
-- useRef-based form inputs for clean data collection
-- Modal dialogs for add/edit operations
-- Select dropdowns for categorical fields
-- Date inputs for temporal data
-- Textarea for remarks/observations
-- Form resets after successful operations
-
-### Data Features
-- Government verification tracking (Indoor/Outdoor Sampling)
-- Certificate number storage
-- Indian operator names throughout
-- Status tracking for all records
-- Dynamic statistics based on live data
-
-## User Preferences & Design Decisions
-- Design: Dark green (#2E7D32) on light green (#E8F5E9) for better contrast
-- Operator Names: Indian names (Rajesh, Priya, Amit, Sunita, Vikram, Anjali, Deepak, Meena)
-- Typography: Bold dark gray (#333333) for all headings
-- Workflow: Rapid feature implementation in fast mode (Redux, search, filter, CRUD all in one go)
-- Tables: Hover effects with light green background for better UX
-- Multi-Select Dropdowns: White background (#fff) for proper visibility
-- Form Data: Captured via state + refs hybrid approach for Select/Input handling
-
-## Latest Fixes (2025-11-23) - COMPLETED ✅
-
-### Media Preparation UI & Functionality Enhancement (Latest)
-- **Search Panel Above Tabs**: Added unified search panel with search input and status filter dropdown above the Autoclave/Media Batch tabs
-- **Removed Inline Search Bars**: Removed duplicate search inputs from inside individual tabs for cleaner UI
-- **Edit & Delete Functionality**: Added full edit and delete functionality for both Autoclave and Media Batch records
-  - Edit button opens modal pre-filled with record data
-  - Delete button removes record with confirmation dialog
-  - Delete also available from within edit modal
-- **State Management**: Separate form states for add vs edit operations to prevent state pollution
-  - `autoclaveForm` and `mediaForm` for add operations
-  - `autoclaveEditForm` and `mediaEditForm` for edit operations
-- **Modal Cleanup**: Proper cleanup handlers reset edit form state when modals close (via ESC, outside click, or Cancel button)
-- **Redux Integration**: Uses `updateAutoclaveRecord`, `updateMediaBatchRecord`, `deleteAutoclaveRecord`, `deleteMediaBatchRecord` actions
-- **Filtering**: Combined search and status filtering applies to both Autoclave and Media Batch records
-
-### Button Component Fix & Form Validation
-- **Button Component**: Fixed to use `React.forwardRef` for proper ref forwarding with Radix UI Dialog components
-- **Form Validation**: Added validation to all modules to prevent empty field submissions
-  - Indoor Sampling: validates required fields (id, date, batchID, sampleType, testType, testedBy, status)
-  - Mortality: validates required fields (id, date, batchID, crop, stage, initialCount, status)
-  - Primary Hardening: validates required fields (id, date, batchName, crop, tunnel, plants, status)
-- **Alert System**: User-friendly alerts when required fields are missing
-- **Data Integrity**: Validation prevents corrupted/empty records from being saved to Redux/localStorage
-
-### Full Redux & CRUD Implementation (All Modules)
-- **Indoor Sampling**: Fully connected to Redux with add/edit/delete modals + batch filtering
-- **Mortality Register**: Fully connected to Redux with add/edit/delete modals + batch filtering + calculated stats
-- **Primary Hardening**: Fully connected to Redux with add/edit/delete modals + batch filtering
-- **Batch Code Filtering**: All three modules have batch dropdown + Search button + Show All Data button
-- **Add Buttons**: Positioned near tables in all modules for consistent UX
-- **Modal Forms**: Scroll-enabled with all required fields for each module
-
-### Previous Fixes
-- **Add Forms - ALL PAGES**: Fully functional with formData state for all Select components
-  - Subculturing: crop, stage, mediaUsed, status
-  - Incubation: chamber, status
-  - SecondaryHardening: crop, tunnel, bed, status
-  - HoldingArea: crop, location, condition, status
-  - OutdoorSampling: stage, crop, sampleType, testType, govVerified, status
-- **Multi-Select Dropdowns**: White background (bg-white) applied to SelectTrigger & SelectContent on ALL pages
-- **Form Reset**: After submit, all forms reset properly (refs cleared, formData reset to empty)
-- **Data Persistence**: Form data immediately appears in table after submit
-- **CRUD Operations**: All Add/Edit/Delete operations fully functional on all modules
-- **State Synchronization**: formData state + refs hybrid approach ensures proper Select value capture
-- **useLocalStorage Hook**: Created in `/src/hooks/useLocalStorage.ts` with localStorage persistence
-- **AppContext (Global Context)**: Created in `/src/context/AppContext.tsx` for global state management
-- **App Provider**: Entire app wrapped with AppContextProvider
-- **All React Hooks Implemented**: useState, useRef, useCallback, useMemo, useEffect, useContext, useLocalStorage
-
-## Available Routes
-### Indoor Module
-- `/indoor/media-preparation` - Media Preparation
-- `/indoor/subculturing` - Subculturing
-- `/indoor/incubation` - Incubation
-- `/indoor/sampling` - Sampling
-
-### Outdoor Module
-- `/outdoor/primary-hardening` - Primary Hardening
-- `/outdoor/secondary-hardening` - Secondary Hardening
-- `/outdoor/mortality` - Mortality
-- `/outdoor/holding-area` - Holding Area
-- `/outdoor/sampling` - Outdoor Sampling
-
-## Recent Changes
-
-### 2025-11-23: Media Preparation Page Redux Integration ✅ (Latest)
-- **Removed**: 8-Stage Tissue Culture Workflow table (no longer needed)
-- **Redux Integration**: Connected MediaPreparation component to Redux store
-  - Uses useAppDispatch() and useAppSelector() custom hooks
-  - Reads data from state.mediaPreparation slice
-  - Dynamic stats calculated from Redux data
-- **Autoclave Register Tab**:
-  - Added "Add Autoclave Cycle" button
-  - Form with fields: Autoclave ID, Date, Batch No., Temperature, Pressure, Duration, Status
-  - Data dispatched to addAutoclaveRecord action
-  - Table displays autoclaveRecords from Redux
-- **Media Batch Register Tab**:
-  - Moved "Add Media Batch" button into the tab (was at top of page)
-  - Form with fields: Batch ID, Prep Date, Media Type, Quantity, pH, Prepared By, Status
-  - Data dispatched to addMediaBatchRecord action
-  - Table displays mediaBatchRecords from Redux
-- **Live Data Updates**: All added data immediately appears in tables via Redux state
-- **Persistent Data**: Both registers use localStorage middleware for data persistence
-
-## Recent Changes (Older)
-
-### 2025-11-23: LocalStorage Data Persistence Implementation ✅ (Latest)
-- **localStorage Middleware**: Created Redux middleware to automatically persist all state changes to browser localStorage
-  - Located at: `/src/store/middleware/localStorageMiddleware.ts`
-  - Saves data for all 9 modules after every Redux action
-- **loadFromLocalStorage Utility**: Created helper function at `/src/store/utils/loadFromLocalStorage.ts`
-  - Loads persisted data on app initialization
-  - Falls back to default data if localStorage is empty
-- **Updated ALL Redux Slices**: All 9 slices now load initial state from localStorage
-  - Existing slices: subculture, incubation, secondaryHardening, holdingArea, outdoorSampling
-  - New slices: mediaPreparation (2 datasets), primaryHardening, mortality, indoorSampling
-- **Data Persistence Keys**:
-  - `subculture_records`, `incubation_records`, `secondaryHardening_records`
-  - `holdingArea_records`, `outdoorSampling_records`
-  - `autoclaveRecords`, `mediaBatchRecords`
-  - `primaryHardening_records`, `mortality_records`, `indoorSampling_records`
-- **Real CRUD Operations**: All add/edit/delete operations now persist across page refreshes
-- **9 Total Redux Slices**: Full state management coverage across all ERP modules
-
-### 2025-11-23: MAJOR Redux State Management & Full Functionality Implementation
-- **Redux Integration**: Installed Redux Toolkit + React-Redux for centralized state management
-- **5 Pages with Full Redux**: Subculturing, Incubation, Secondary Hardening, Holding Area, Outdoor Sampling
-- **Search Functionality**: Real-time search across all record fields in all 5 pages
-- **Filter by Status**: Dynamic status filtering (All, Pending, Active, Completed, Contaminated)
-- **Add/Edit/Delete Operations**: Fully functional CRUD with Redux dispatch actions
-- **Government Verification**: Added to Indoor & Outdoor Sampling with certificate tracking
-- **React Hooks Usage**:
-  - useState: Form state, modal state, editing state
-  - useRef: Form input references for easy data collection
-  - useCallback: Memoized event handlers for add/edit/delete
-  - useMemo: Filtered records computation for search/filter
-  - useEffect: Optional for future async operations
-- **Dynamic Stats**: Stats cards automatically calculate values from Redux state
-- **Indian Operator Names**: All pages use Indian names (Rajesh Kumar, Priya Sharma, Amit Patel, etc.)
-- **Form Features**: 
-  - Modal dialogs with validation
-  - Scroll-enabled for long forms
-  - Status dropdowns with all states
-  - Date pickers for temporal data
-
-### 2025-11-23: UI/UX Enhancements & Content Updates
-- **Media Preparation**: Added 8-stage tissue culture workflow table with all stages
-- **Sampling Pages**: Added government verification fields (Verified by Gov, Certificate Number, Reason)
-- **Primary Hardening**: Removed grid view, simplified to table-only form
-- **Mortality Page**: Removed all charts/graphs, kept key metrics and table
-- **Typography**: Bold dark gray (#333333) headers in all tables
-- **Hover Effects**: Light green hover (#F3FFF4) on all table rows
-- **Active Tab Styling**: Dark gray background for selected tabs
-- **Sidebar**: Improved with dark green hover effects, clickable icons in collapsed mode
-
-### 2025-11-23: Initial UI Setup
-- Changed default route to Media Preparation
-- Improved sidebar hover effects with better color contrast
-- Increased font sizes (nav 15px, headings +2px)
-- Enhanced sidebar text readability
-
-### 2025-11-23: Initial Project Setup in Replit
-- Configured React 18 + TypeScript + Vite 6
-- Tailwind CSS v4 configuration
-- All dependencies installed
-- Development workflow running on port 5000
+- Redux Toolkit
+- React-Redux
+- Recharts
