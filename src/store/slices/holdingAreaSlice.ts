@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { loadFromLocalStorage } from "../utils/loadFromLocalStorage";
 
 export type StatusType = "pending" | "active" | "completed" | "contaminated";
 
@@ -23,8 +24,7 @@ interface HoldingAreaState {
   editingId: string | null;
 }
 
-const initialState: HoldingAreaState = {
-  records: [
+const defaultRecords: HoldingAreaRecord[] = [
     {
       id: "HA-2024-001",
       date: "2024-11-18",
@@ -77,7 +77,10 @@ const initialState: HoldingAreaState = {
       dispatchDate: "2024-11-26",
       status: "active",
     },
-  ],
+  ];
+
+const initialState: HoldingAreaState = {
+  records: loadFromLocalStorage<HoldingAreaRecord[]>('holdingArea_records', defaultRecords),
   searchTerm: "",
   filterStatus: "all",
   editingId: null,

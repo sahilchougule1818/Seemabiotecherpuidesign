@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { loadFromLocalStorage } from "../utils/loadFromLocalStorage";
 
 export type StatusType = "pending" | "active" | "completed" | "contaminated";
 
@@ -25,8 +26,7 @@ interface OutdoorSamplingState {
   editingId: string | null;
 }
 
-const initialState: OutdoorSamplingState = {
-  records: [
+const defaultRecords: OutdoorSamplingRecord[] = [
     {
       id: "OS-2024-001",
       date: "2024-11-20",
@@ -87,7 +87,10 @@ const initialState: OutdoorSamplingState = {
       certNumber: "",
       status: "contaminated",
     },
-  ],
+  ];
+
+const initialState: OutdoorSamplingState = {
+  records: loadFromLocalStorage<OutdoorSamplingRecord[]>('outdoorSampling_records', defaultRecords),
   searchTerm: "",
   filterStatus: "all",
   editingId: null,

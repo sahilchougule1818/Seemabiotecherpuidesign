@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { loadFromLocalStorage } from "../utils/loadFromLocalStorage";
 
 export type StatusType = "pending" | "active" | "completed" | "contaminated";
 
@@ -22,8 +23,7 @@ interface IncubationState {
   editingId: string | null;
 }
 
-const initialState: IncubationState = {
-  records: [
+const defaultRecords: IncubationRecord[] = [
     {
       id: "INC-2024-001",
       batchID: "SC-2024-001",
@@ -72,7 +72,10 @@ const initialState: IncubationState = {
       observations: "Temperature fluctuation",
       status: "contaminated",
     },
-  ],
+  ];
+
+const initialState: IncubationState = {
+  records: loadFromLocalStorage<IncubationRecord[]>('incubation_records', defaultRecords),
   searchTerm: "",
   filterStatus: "all",
   editingId: null,

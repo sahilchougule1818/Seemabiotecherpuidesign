@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { loadFromLocalStorage } from "../utils/loadFromLocalStorage";
 
 export type StatusType = "pending" | "active" | "completed" | "contaminated";
 
@@ -25,8 +26,7 @@ interface SecondaryHardeningState {
   editingId: string | null;
 }
 
-const initialState: SecondaryHardeningState = {
-  records: [
+const defaultRecords: SecondaryHardeningRecord[] = [
     {
       id: "SH-2024-001",
       date: "2024-11-10",
@@ -87,7 +87,10 @@ const initialState: SecondaryHardeningState = {
       survivability: "89%",
       status: "pending",
     },
-  ],
+  ];
+
+const initialState: SecondaryHardeningState = {
+  records: loadFromLocalStorage<SecondaryHardeningRecord[]>('secondaryHardening_records', defaultRecords),
   searchTerm: "",
   filterStatus: "all",
   editingId: null,

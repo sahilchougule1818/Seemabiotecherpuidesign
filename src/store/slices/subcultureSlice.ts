@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { loadFromLocalStorage } from "../utils/loadFromLocalStorage";
 
 export type StatusType = "pending" | "active" | "completed" | "contaminated";
 
@@ -22,8 +23,7 @@ interface SubcultureState {
   editingId: string | null;
 }
 
-const initialState: SubcultureState = {
-  records: [
+const defaultRecords: SubcultureRecord[] = [
     {
       id: "SC-2024-001",
       date: "2024-11-20",
@@ -72,7 +72,10 @@ const initialState: SubcultureState = {
       technician: "Sunita Verma",
       status: "contaminated",
     },
-  ],
+  ];
+
+const initialState: SubcultureState = {
+  records: loadFromLocalStorage<SubcultureRecord[]>('subculture_records', defaultRecords),
   searchTerm: "",
   filterStatus: "all",
   editingId: null,
